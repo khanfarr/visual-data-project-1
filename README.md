@@ -12,8 +12,11 @@ This data visualization project will highlight how students move across borders 
 - Globalization and “where talent goes”
 - Whether a country is an education destination (attracts students) or a sender (students leave)
 
+Data sources:
+- [Share of students from abroad](https://ourworldindata.org/grapher/share-of-students-from-abroad?mapSelect=USA~ETH~LBY)
+- [Share of students studying abroad](https://ourworldindata.org/grapher/share-of-students-studying-abroad?mapSelect=ARE~NER~DZA)
 
 
-### other
+### other notes
 share-of-students-from-abroad.csv = inbound
 share-of-students-studying-abroad.csv = outbound
