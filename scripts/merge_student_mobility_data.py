@@ -30,7 +30,7 @@ if "Entity_inb" in merged.columns:
 merged = merged.dropna(subset=["inbound_pct", "outbound_pct"])
 
 # Save merged file
-out_path = "data/student_mobility_merged.csv"
+out_path = "data/student-mobility-merged.csv"
 merged.to_csv(out_path, index=False)
 
 print("Saved:", out_path)
