@@ -186,8 +186,11 @@ d3.csv(DATA_PATH, parseRow)
       values: filtered.map((d) => d.outbound_pct),
       xLabel: "Outbound mobility (%)",
     });
+
+    // Chart 3: scatterplot of outbound vs inbound
+    drawScatter(filtered);
   })
-
-
-
-  
+  .catch((error) => {
+    console.error("Failed to load CSV:", error);
+    d3.select("#year-value").text("Could not load data");
+  });
