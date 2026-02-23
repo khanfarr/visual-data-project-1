@@ -1,0 +1,110 @@
+:root {
+  --bg: #f6f8fb;
+  --card: #ffffff;
+  --text: #1f2937;
+  --muted: #4b5563;
+  --border: #d8e0ea;
+  --accent: #4f7ea8;
+  --accent-dark: #2f5f8d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.5;
+}
+
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+}
+
+.page-header h1 {
+  margin: 0 0 10px;
+  font-size: 1.8rem;
+}
+
+.meta {
+  margin: 2px 0;
+  color: var(--muted);
+}
+
+.description {
+  margin: 10px 0 0;
+}
+
+.charts-grid {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.chart-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.chart-card h2 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.chart {
+  width: 100%;
+  min-height: 320px;
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+.axis-label {
+  fill: var(--text);
+  font-size: 12px;
+}
+
+.tick text {
+  font-size: 11px;
+}
+
+.bar {
+  fill: var(--accent);
+}
+
+.dot {
+  fill: var(--accent);
+  opacity: 0.85;
+}
+
+.dot:hover {
+  fill: var(--accent-dark);
+}
+
+.tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: #111827;
+  color: #f9fafb;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.35;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+@media (max-width: 680px) {
+  .chart {
+    min-height: 280px;
+  }
+}
