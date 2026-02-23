@@ -173,11 +173,21 @@ d3.csv(DATA_PATH, parseRow)
 
     d3.select("#year-value").text(yearShown ?? "N/A");
 
-    // Chart 1 starts here: histogram for inbound mobility
+    // Chart 1: histogram for inbound mobility
     drawHistogram({
       containerId: "#hist-inbound",
       values: filtered.map((d) => d.inbound_pct),
       xLabel: "Inbound mobility (%)",
     });
+
+    // Chart 2: histogram for outbound mobility
+    drawHistogram({
+      containerId: "#hist-outbound",
+      values: filtered.map((d) => d.outbound_pct),
+      xLabel: "Outbound mobility (%)",
+    });
   })
 
+
+
+  
