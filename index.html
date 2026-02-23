@@ -34,11 +34,26 @@
           <h2>Correlation: Outbound vs Inbound mobility</h2>
           <div id="scatter" class="chart"></div>
         </article>
+
+        <article class="chart-card wide">
+          <div class="map-header">
+            <h2 id="map-title">Map: Inbound student mobility (%)</h2>
+            <label class="map-control">
+              Metric:
+              <select id="map-metric">
+                <option value="inbound_pct" selected>Inbound % (students from abroad)</option>
+                <option value="outbound_pct">Outbound % (students studying abroad)</option>
+              </select>
+            </label>
+          </div>
+          <div id="map" class="chart map-chart"></div>
+          <div id="map-legend" class="map-legend"></div>
+        </article>
       </section>
     </main>
 
     <div id="tooltip" class="tooltip" aria-hidden="true"></div>
 
-    <script src="js/main.js?v=2"></script>
+    <script src="js/main.js?v=3"></script>
   </body>
 </html>

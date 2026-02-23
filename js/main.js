@@ -1,9 +1,19 @@
 const DATA_PATH = "data/student_mobility_merged.csv";
+const WORLD_GEOJSON_URL =
+  "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson";
 
 const tooltip = d3.select("#tooltip");
+let mapCountries;
+let mapColorScale;
+let mapMetricKey = "inbound_pct";
+let mapDataRows = [];
 
 function formatNumber(value) {
   return d3.format(".2f")(value);
+}
+
+function formatMaybe(value) {
+  return Number.isFinite(value) ? `${formatNumber(value)}%` : "N/A";
 }
 
 function drawHistogram({ containerId, values, xLabel }) {
@@ -159,8 +169,226 @@ function parseRow(row) {
   };
 }
 
-d3.csv(DATA_PATH, parseRow)
-  .then((rows) => {
+function normalizeName(name) {
+  return (name || "")
+    .toLowerCase()
+    .replace(/&/g, "and")
+    .replace(/[^a-z0-9 ]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getFeatureName(feature) {
+  const props = feature.properties || {};
+  return props.name || props.NAME || props.admin || props.ADMIN || "Unknown";
+}
+
+function getFeatureIso3(feature) {
+  const props = feature.properties || {};
+  const candidates = [
+    feature.id,
+    props.iso_a3,
+    props.ISO_A3,
+    props.adm0_a3,
+    props.ADM0_A3,
+    props.code,
+    props.Code,
+  ];
+
+  for (const value of candidates) {
+    if (typeof value === "string" && value.length === 3) {
+      return value.toUpperCase();
+    }
+  }
+  return null;
+}
+
+function drawLegend(minValue, maxValue) {
+  const container = d3.select("#map-legend");
+  container.selectAll("*").remove();
+
+  const width = 260;
+  const height = 62;
+  const barWidth = 180;
+  const barHeight = 12;
+  const barX = 40;
+  const barY = 24;
+
+  const svg = container
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+  const gradientId = "map-legend-gradient";
+  const defs = svg.append("defs");
+  const gradient = defs
+    .append("linearGradient")
+    .attr("id", gradientId)
+    .attr("x1", "0%")
+    .attr("x2", "100%")
+    .attr("y1", "0%")
+    .attr("y2", "0%");
+
+  gradient.append("stop").attr("offset", "0%").attr("stop-color", mapColorScale(minValue));
+  gradient.append("stop").attr("offset", "100%").attr("stop-color", mapColorScale(maxValue));
+
+  svg
+    .append("text")
+    .attr("x", barX)
+    .attr("y", 14)
+    .attr("font-size", 11)
+    .attr("fill", "#334155")
+    .text("Mobility rate (%)");
+
+  svg
+    .append("rect")
+    .attr("x", barX)
+    .attr("y", barY)
+    .attr("width", barWidth)
+    .attr("height", barHeight)
+    .attr("fill", `url(#${gradientId})`)
+    .attr("stroke", "#cbd5e1");
+
+  svg
+    .append("text")
+    .attr("x", barX)
+    .attr("y", barY + 28)
+    .attr("font-size", 11)
+    .attr("fill", "#334155")
+    .text(`${formatNumber(minValue)}%`);
+
+  svg
+    .append("text")
+    .attr("x", barX + barWidth)
+    .attr("y", barY + 28)
+    .attr("text-anchor", "end")
+    .attr("font-size", 11)
+    .attr("fill", "#334155")
+    .text(`${formatNumber(maxValue)}%`);
+}
+
+function updateMap(metricKey) {
+  mapMetricKey = metricKey;
+
+  const title =
+    metricKey === "inbound_pct"
+      ? "Map: Inbound student mobility (%)"
+      : "Map: Outbound student mobility (%)";
+  d3.select("#map-title").text(title);
+
+  const values = mapDataRows
+    .map((d) => d[metricKey])
+    .filter((value) => Number.isFinite(value));
+
+  let minValue = d3.min(values) ?? 0;
+  let maxValue = d3.max(values) ?? 1;
+  if (minValue === maxValue) {
+    maxValue = minValue + 1;
+  }
+
+  mapColorScale = d3
+    .scaleSequential((t) => d3.interpolateBlues(0.35 + 0.65 * t))
+    .domain([minValue, maxValue]);
+
+  mapCountries.attr("fill", (d) => {
+    const value = d.row?.[metricKey];
+    return Number.isFinite(value) ? mapColorScale(value) : "#e5e7eb";
+  });
+
+  drawLegend(minValue, maxValue);
+}
+
+function drawMap(geojson, dataRows) {
+  mapDataRows = dataRows;
+
+  const container = d3.select("#map");
+  container.selectAll("*").remove();
+
+  const margin = { top: 10, right: 10, bottom: 10, left: 10 };
+  const width = Math.max(container.node().clientWidth, 320);
+  const height = 360;
+  const innerWidth = width - margin.left - margin.right;
+  const innerHeight = height - margin.top - margin.bottom;
+
+  const svg = container
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+  const g = svg
+    .append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  const projection = d3.geoNaturalEarth1().fitSize([innerWidth, innerHeight], geojson);
+  const path = d3.geoPath(projection);
+
+  const byIso = new Map(
+    dataRows
+      .filter((d) => typeof d.Code === "string" && d.Code.length === 3)
+      .map((d) => [d.Code.toUpperCase(), d])
+  );
+
+  const byName = new Map(dataRows.map((d) => [normalizeName(d.Entity), d]));
+
+  const countriesWithData = geojson.features.map((feature) => {
+    const iso3 = getFeatureIso3(feature);
+    const featureName = getFeatureName(feature);
+
+    let row = null;
+    if (iso3 && byIso.has(iso3)) {
+      row = byIso.get(iso3);
+    } else {
+      // Name matching fallback for GeoJSON files that do not include ISO-3 codes.
+      // This may be imperfect because country names can differ across datasets.
+      const nameKey = normalizeName(featureName);
+      row = byName.get(nameKey) || null;
+    }
+
+    return { feature, featureName, row };
+  });
+
+  mapCountries = g
+    .selectAll("path")
+    .data(countriesWithData)
+    .join("path")
+    .attr("class", "country")
+    .attr("d", (d) => path(d.feature))
+    .on("mousemove", (event, d) => {
+      d3.select(event.currentTarget).attr("stroke", "#111827").attr("stroke-width", 1.4);
+
+      if (!d.row) {
+        tooltip
+          .style("opacity", 1)
+          .style("left", `${event.pageX + 12}px`)
+          .style("top", `${event.pageY - 28}px`)
+          .html(`<strong>${d.featureName}</strong><br/>No data`);
+        return;
+      }
+
+      tooltip
+        .style("opacity", 1)
+        .style("left", `${event.pageX + 12}px`)
+        .style("top", `${event.pageY - 28}px`)
+        .html(
+          `<strong>${d.row.Entity}</strong><br/>Inbound: ${formatMaybe(
+            d.row.inbound_pct
+          )}<br/>Outbound: ${formatMaybe(d.row.outbound_pct)}<br/>Year: ${d.row.Year}`
+        );
+    })
+    .on("mouseleave", (event) => {
+      d3.select(event.currentTarget).attr("stroke", "#ffffff").attr("stroke-width", 0.6);
+      tooltip.style("opacity", 0);
+    });
+
+  d3.select("#map-metric").on("change", (event) => {
+    updateMap(event.target.value);
+  });
+
+  updateMap("inbound_pct");
+}
+
+Promise.all([d3.csv(DATA_PATH, parseRow), d3.json(WORLD_GEOJSON_URL)])
+  .then(([rows, worldGeojson]) => {
     const validRows = rows.filter(
       (d) =>
         Number.isFinite(d.Year) &&
@@ -173,24 +401,23 @@ d3.csv(DATA_PATH, parseRow)
 
     d3.select("#year-value").text(yearShown ?? "N/A");
 
-    // Chart 1: histogram for inbound mobility
     drawHistogram({
       containerId: "#hist-inbound",
       values: filtered.map((d) => d.inbound_pct),
       xLabel: "Inbound mobility (%)",
     });
 
-    // Chart 2: histogram for outbound mobility
     drawHistogram({
       containerId: "#hist-outbound",
       values: filtered.map((d) => d.outbound_pct),
       xLabel: "Outbound mobility (%)",
     });
 
-    // Chart 3: scatterplot of outbound vs inbound
     drawScatter(filtered);
+    drawMap(worldGeojson, filtered);
   })
   .catch((error) => {
-    console.error("Failed to load CSV:", error);
+    console.error("Failed to load dashboard data:", error);
     d3.select("#year-value").text("Could not load data");
+    d3.select("#map").text("Could not load map data.");
   });

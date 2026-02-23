@@ -68,6 +68,41 @@ body {
   grid-column: 1 / -1;
 }
 
+.map-header {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.map-control {
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.map-control select {
+  margin-left: 6px;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: #fff;
+  color: var(--text);
+}
+
+.map-chart {
+  min-height: 360px;
+}
+
+.country {
+  stroke: #ffffff;
+  stroke-width: 0.6px;
+}
+
+.map-legend {
+  margin-top: 6px;
+}
+
 .axis-label {
   fill: var(--text);
   font-size: 12px;
@@ -106,5 +141,9 @@ body {
 @media (max-width: 680px) {
   .chart {
     min-height: 280px;
+  }
+
+  .map-chart {
+    min-height: 300px;
   }
 }
