@@ -1,6 +1,7 @@
 
 ## Global Student Mobility: Inbound vs Outbound
 This data visualization project will highlight how students move across borders for education.
+Live Website: https://visual-data-project-1.khansfareena.workers.dev/
 
  **Analyze how education opportunities and international flows differ across countries by focusing on the following**
 - Patterns and differences by region
