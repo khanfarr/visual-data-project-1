@@ -1,4 +1,4 @@
-const DATA_PATH = "data/student-mobility-merged.csv";
+const DATA_PATH = "data/student_mobility_merged.csv";
 
 const tooltip = d3.select("#tooltip");
 
