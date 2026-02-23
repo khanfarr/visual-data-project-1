@@ -418,8 +418,11 @@ function drawMap(geojson, dataRows) {
       tooltip.style("opacity", 0);
     });
 
-  d3.select("#map-metric").on("change", (event) => {
-    updateMap(event.target.value);
+  d3.selectAll(".map-toggle-btn").on("click", function () {
+    const metric = this.dataset.metric;
+    d3.selectAll(".map-toggle-btn").classed("active", false);
+    d3.select(this).classed("active", true);
+    updateMap(metric);
   });
 
   updateMap("inbound_pct");

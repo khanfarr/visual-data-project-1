@@ -77,17 +77,49 @@ body {
 }
 
 .map-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 0.9rem;
   color: var(--muted);
 }
 
-.map-control select {
-  margin-left: 6px;
-  padding: 4px 6px;
+.map-toggle {
+  display: inline-flex;
   border: 1px solid var(--border);
-  border-radius: 4px;
-  background: #fff;
+  border-radius: 999px;
+  overflow: hidden;
+  background: #eef3f8;
+  padding: 2px;
+}
+
+.map-toggle-btn {
+  border: 0;
+  background: transparent;
   color: var(--text);
+  padding: 4px 10px;
+  font-size: 0.84rem;
+  border-radius: 999px;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.map-toggle-btn + .map-toggle-btn {
+  margin-left: 2px;
+}
+
+.map-toggle-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.map-toggle-btn:hover {
+  background: #dfe8f2;
+}
+
+.map-toggle-btn.active:hover {
+  background: var(--accent-dark);
 }
 
 .map-chart {
