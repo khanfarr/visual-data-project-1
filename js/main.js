@@ -203,16 +203,17 @@ function getFeatureIso3(feature) {
   return null;
 }
 
-function drawLegend(minValue, maxValue) {
+function drawLegend(minValue, maxValue, scaleMin, scaleMax) {
   const container = d3.select("#map-legend");
   container.selectAll("*").remove();
 
-  const width = 260;
-  const height = 62;
-  const barWidth = 180;
+  const containerWidth = container.node()?.clientWidth || 320;
+  const width = Math.max(320, Math.min(containerWidth, 440));
+  const height = 108;
+  const barWidth = width - 80;
   const barHeight = 12;
   const barX = 40;
-  const barY = 24;
+  const barY = 62;
 
   const svg = container
     .append("svg")
@@ -229,16 +230,47 @@ function drawLegend(minValue, maxValue) {
     .attr("y1", "0%")
     .attr("y2", "0%");
 
-  gradient.append("stop").attr("offset", "0%").attr("stop-color", mapColorScale(minValue));
-  gradient.append("stop").attr("offset", "100%").attr("stop-color", mapColorScale(maxValue));
+  if (minValue === 0 && maxValue > 0) {
+    const rawZeroOffset = (scaleMin / maxValue) * 100;
+    const zeroOffset = Math.max(2, Math.min(rawZeroOffset, 12));
+    const blendOffset = Math.min(zeroOffset + 4, 18);
+    gradient.append("stop").attr("offset", "0%").attr("stop-color", "#cbd5e1");
+    gradient.append("stop").attr("offset", `${zeroOffset}%`).attr("stop-color", "#cbd5e1");
+    gradient
+      .append("stop")
+      .attr("offset", `${blendOffset}%`)
+      .attr("stop-color", mapColorScale(scaleMin));
+    gradient.append("stop").attr("offset", "100%").attr("stop-color", mapColorScale(scaleMax));
+  } else {
+    gradient.append("stop").attr("offset", "0%").attr("stop-color", mapColorScale(scaleMin));
+    gradient.append("stop").attr("offset", "100%").attr("stop-color", mapColorScale(scaleMax));
+  }
 
   svg
     .append("text")
     .attr("x", barX)
-    .attr("y", 14)
+    .attr("y", 22)
     .attr("font-size", 11)
     .attr("fill", "#334155")
     .text("Mobility rate (%)");
+
+  svg
+    .append("text")
+    .attr("x", barX)
+    .attr("y", 38)
+    .attr("font-size", 10)
+    .attr("fill", "#64748b")
+    .text("Percent of students connected to international study");
+
+  if (minValue === 0) {
+    svg
+      .append("text")
+      .attr("x", barX)
+      .attr("y", 50)
+      .attr("font-size", 10)
+      .attr("fill", "#64748b")
+      .text("0% is shown as gray on the map");
+  }
 
   svg
     .append("rect")
@@ -252,15 +284,15 @@ function drawLegend(minValue, maxValue) {
   svg
     .append("text")
     .attr("x", barX)
-    .attr("y", barY + 28)
+    .attr("y", barY + 30)
     .attr("font-size", 11)
     .attr("fill", "#334155")
-    .text(`${formatNumber(minValue)}%`);
+    .text(`${formatNumber(minValue === 0 ? scaleMin : minValue)}%`);
 
   svg
     .append("text")
     .attr("x", barX + barWidth)
-    .attr("y", barY + 28)
+    .attr("y", barY + 30)
     .attr("text-anchor", "end")
     .attr("font-size", 11)
     .attr("fill", "#334155")
@@ -279,23 +311,29 @@ function updateMap(metricKey) {
   const values = mapDataRows
     .map((d) => d[metricKey])
     .filter((value) => Number.isFinite(value));
+  const positiveValues = values.filter((value) => value > 0);
 
-  let minValue = d3.min(values) ?? 0;
-  let maxValue = d3.max(values) ?? 1;
-  if (minValue === maxValue) {
-    maxValue = minValue + 1;
+  const minValue = d3.min(values) ?? 0;
+  const maxValue = d3.max(values) ?? 1;
+
+  let scaleMin = d3.min(positiveValues) ?? 0;
+  let scaleMax = maxValue;
+  if (scaleMin === scaleMax) {
+    scaleMax = scaleMin + 1;
   }
 
   mapColorScale = d3
-    .scaleSequential((t) => d3.interpolateBlues(0.35 + 0.65 * t))
-    .domain([minValue, maxValue]);
+    .scaleSequential((t) => d3.interpolateLab("#7fb3d5", "#08306b")(t))
+    .domain([scaleMin, scaleMax]);
 
   mapCountries.attr("fill", (d) => {
     const value = d.row?.[metricKey];
-    return Number.isFinite(value) ? mapColorScale(value) : "#e5e7eb";
+    if (!Number.isFinite(value)) return "#e5e7eb";
+    if (value === 0) return "#cbd5e1";
+    return mapColorScale(value);
   });
 
-  drawLegend(minValue, maxValue);
+  drawLegend(minValue, maxValue, scaleMin, scaleMax);
 }
 
 function drawMap(geojson, dataRows) {

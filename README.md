@@ -21,3 +21,8 @@ Data sources:
 ### other notes
 share-of-students-from-abroad.csv = inbound
 share-of-students-studying-abroad.csv = outbound
+
+### some interesting analysis to shrare
+The map legend updates based on the data currently shown.
+For example, in Inbound mode, the legend ends at 85.57% because that is the highest inbound value in the selected year.
+So the color bar is not a fixed 0–100 scale; it automatically adjusts to the real minimum and maximum values in the current view.
