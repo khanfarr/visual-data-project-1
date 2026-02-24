@@ -10,6 +10,39 @@ let mapDataRows = [];
 let mapAllRows = [];
 let mapYears = [];
 let mapGeojson = null;
+const MIN_CHART_WIDTH = 320;
+
+function createChart({ containerId, margin, height }) {
+  const container = d3.select(containerId);
+  container.selectAll("*").remove();
+
+  const width = Math.max(container.node().clientWidth, MIN_CHART_WIDTH);
+  const innerWidth = width - margin.left - margin.right;
+  const innerHeight = height - margin.top - margin.bottom;
+
+  const svg = container
+    .append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+  const g = svg
+    .append("g")
+    .attr("transform", `translate(${margin.left},${margin.top})`);
+
+  return { container, svg, g, width, height, innerWidth, innerHeight };
+}
+
+function showTooltip(event, html) {
+  tooltip
+    .style("opacity", 1)
+    .style("left", `${event.pageX + 12}px`)
+    .style("top", `${event.pageY - 28}px`)
+    .html(html);
+}
+
+function hideTooltip() {
+  tooltip.style("opacity", 0);
+}
 
 function formatNumber(value) {
   return d3.format(".2f")(value);
@@ -24,23 +57,9 @@ function formatMoney(value) {
 }
 
 function drawHistogram({ containerId, values, xLabel }) {
-  const container = d3.select(containerId);
-  container.selectAll("*").remove();
-
   const margin = { top: 20, right: 20, bottom: 52, left: 56 };
-  const width = Math.max(container.node().clientWidth, 320);
   const height = 320;
-  const innerWidth = width - margin.left - margin.right;
-  const innerHeight = height - margin.top - margin.bottom;
-
-  const svg = container
-    .append("svg")
-    .attr("width", width)
-    .attr("height", height);
-
-  const g = svg
-    .append("g")
-    .attr("transform", `translate(${margin.left},${margin.top})`);
+  const { g, innerWidth, innerHeight } = createChart({ containerId, margin, height });
 
   const xMin = 0;
   const xMax = d3.max(values) ?? 0;
@@ -71,17 +90,12 @@ function drawHistogram({ containerId, values, xLabel }) {
     .attr("width", (d) => Math.max(0, x(d.x1) - x(d.x0) - 1))
     .attr("height", (d) => innerHeight - y(d.length))
     .on("mousemove", (event, d) => {
-      tooltip
-        .style("opacity", 1)
-        .style("left", `${event.pageX + 12}px`)
-        .style("top", `${event.pageY - 28}px`)
-        .html(
-          `Range: ${formatNumber(d.x0)}% to ${formatNumber(d.x1)}%<br/>Countries: ${d.length}`
-        );
+      showTooltip(
+        event,
+        `Range: ${formatNumber(d.x0)}% to ${formatNumber(d.x1)}%<br/>Countries: ${d.length}`
+      );
     })
-    .on("mouseleave", () => {
-      tooltip.style("opacity", 0);
-    });
+    .on("mouseleave", hideTooltip);
 
   g.append("g")
     .attr("transform", `translate(0,${innerHeight})`)
@@ -106,23 +120,13 @@ function drawHistogram({ containerId, values, xLabel }) {
 }
 
 function drawScatter(data) {
-  const container = d3.select("#scatter");
-  container.selectAll("*").remove();
-
   const margin = { top: 20, right: 20, bottom: 54, left: 58 };
-  const width = Math.max(container.node().clientWidth, 320);
   const height = 360;
-  const innerWidth = width - margin.left - margin.right;
-  const innerHeight = height - margin.top - margin.bottom;
-
-  const svg = container
-    .append("svg")
-    .attr("width", width)
-    .attr("height", height);
-
-  const g = svg
-    .append("g")
-    .attr("transform", `translate(${margin.left},${margin.top})`);
+  const { g, innerWidth, innerHeight } = createChart({
+    containerId: "#scatter",
+    margin,
+    height,
+  });
 
   const x = d3
     .scaleLinear()
@@ -150,17 +154,14 @@ function drawScatter(data) {
     .attr("cy", (d) => y(d.inbound_pct))
     .attr("r", 4)
     .on("mousemove", (event, d) => {
-      tooltip
-        .style("opacity", 1)
-        .style("left", `${event.pageX + 12}px`)
-        .style("top", `${event.pageY - 28}px`)
-        .html(
-          `<strong>${d.Entity}</strong><br/>Inbound: ${formatNumber(d.inbound_pct)}%<br/>Outbound: ${formatNumber(d.outbound_pct)}%<br/>Year: ${d.Year}`
-        );
+      showTooltip(
+        event,
+        `<strong>${d.Entity}</strong><br/>Inbound: ${formatNumber(
+          d.inbound_pct
+        )}%<br/>Outbound: ${formatNumber(d.outbound_pct)}%<br/>Year: ${d.Year}`
+      );
     })
-    .on("mouseleave", () => {
-      tooltip.style("opacity", 0);
-    });
+    .on("mouseleave", hideTooltip);
 
   g.append("text")
     .attr("class", "axis-label")
@@ -360,14 +361,13 @@ function drawLegend(minValue, maxValue, scaleMin, scaleMax, metricKey) {
 function updateMap(metricKey) {
   mapMetricKey = metricKey;
   const isGdpMetric = metricKey === "gdp_per_capita";
+  const mapTitles = {
+    inbound_pct: "Map: Inbound student mobility (%)",
+    outbound_pct: "Map: Outbound student mobility (%)",
+    gdp_per_capita: "Map: GDP per capita (US$)",
+  };
 
-  const title =
-    metricKey === "inbound_pct"
-      ? "Map: Inbound student mobility (%)"
-      : metricKey === "outbound_pct"
-      ? "Map: Outbound student mobility (%)"
-      : "Map: GDP per capita (US$)";
-  d3.select("#map-title").text(title);
+  d3.select("#map-title").text(mapTitles[metricKey] || mapTitles.inbound_pct);
 
   const values = mapDataRows
     .map((d) => d[metricKey])
@@ -402,24 +402,13 @@ function updateMap(metricKey) {
 
 function drawMap(geojson, dataRows) {
   mapDataRows = dataRows;
-
-  const container = d3.select("#map");
-  container.selectAll("*").remove();
-
   const margin = { top: 10, right: 10, bottom: 10, left: 10 };
-  const width = Math.max(container.node().clientWidth, 320);
   const height = 360;
-  const innerWidth = width - margin.left - margin.right;
-  const innerHeight = height - margin.top - margin.bottom;
-
-  const svg = container
-    .append("svg")
-    .attr("width", width)
-    .attr("height", height);
-
-  const g = svg
-    .append("g")
-    .attr("transform", `translate(${margin.left},${margin.top})`);
+  const { g, innerWidth, innerHeight } = createChart({
+    containerId: "#map",
+    margin,
+    height,
+  });
 
   const projection = d3.geoNaturalEarth1().fitSize([innerWidth, innerHeight], geojson);
   const path = d3.geoPath(projection);
@@ -459,29 +448,22 @@ function drawMap(geojson, dataRows) {
       d3.select(event.currentTarget).attr("stroke", "#111827").attr("stroke-width", 1.4);
 
       if (!d.row) {
-        tooltip
-          .style("opacity", 1)
-          .style("left", `${event.pageX + 12}px`)
-          .style("top", `${event.pageY - 28}px`)
-          .html(`<strong>${d.featureName}</strong><br/>No data`);
+        showTooltip(event, `<strong>${d.featureName}</strong><br/>No data`);
         return;
       }
 
-      tooltip
-        .style("opacity", 1)
-        .style("left", `${event.pageX + 12}px`)
-        .style("top", `${event.pageY - 28}px`)
-        .html(
-          `<strong>${d.row.Entity}</strong><br/>Inbound: ${formatMaybe(
-            d.row.inbound_pct
-          )}<br/>Outbound: ${formatMaybe(
-            d.row.outbound_pct
-          )}<br/>GDP per capita: ${formatMoney(d.row.gdp_per_capita)}<br/>Year: ${d.row.Year}`
-        );
+      showTooltip(
+        event,
+        `<strong>${d.row.Entity}</strong><br/>Inbound: ${formatMaybe(
+          d.row.inbound_pct
+        )}<br/>Outbound: ${formatMaybe(
+          d.row.outbound_pct
+        )}<br/>GDP per capita: ${formatMoney(d.row.gdp_per_capita)}<br/>Year: ${d.row.Year}`
+      );
     })
     .on("mouseleave", (event) => {
       d3.select(event.currentTarget).attr("stroke", "#ffffff").attr("stroke-width", 0.6);
-      tooltip.style("opacity", 0);
+      hideTooltip();
     });
 
   d3.select("#map-metric")
