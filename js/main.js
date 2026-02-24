@@ -127,14 +127,14 @@ function renderMapForYear(year) {
 function updateChartTitles(year) {
   const yearText = Number.isFinite(year) ? ` during ${year}` : "";
   d3.select("#hist-inbound-title").text(
-    `Distribution: Inbound student mobility (%)${yearText}`
+    `Inbound student mobility (%)${yearText}`
   );
   d3.select("#hist-outbound-title").text(
-    `Distribution: Outbound student mobility (%)${yearText}`
+    `Outbound student mobility (%)${yearText}`
   );
   d3.select("#scatter-title").text(
-    `Correlation: Outbound vs Inbound mobility${yearText}`
-  );
+    `Outbound vs Inbound mobility${yearText}`
+  )
 }
 
 function setupMapTimeline() {
