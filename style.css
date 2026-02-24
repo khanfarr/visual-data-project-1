@@ -97,6 +97,10 @@ body {
   min-height: 320px;
 }
 
+.scatter-chart {
+  min-height: 300px;
+}
+
 .wide {
   grid-column: 1 / -1;
 }
