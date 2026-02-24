@@ -167,16 +167,16 @@ body {
 }
 
 .bar {
-  fill: var(--accent);
+  fill: #38bdf8;
 }
 
 .dot {
-  fill: var(--accent);
+  fill: #38bdf8;
   opacity: 0.85;
 }
 
 .dot:hover {
-  fill: var(--accent-dark);
+  fill: #0284c7;
 }
 
 .tooltip {
