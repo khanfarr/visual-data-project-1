@@ -36,21 +36,14 @@
         <article class="chart-card wide">
           <div class="map-header">
             <h2 id="map-title">Map: Inbound student mobility (%)</h2>
-            <div class="map-control">
-              <span>Metric:</span>
-              <div class="map-toggle" role="group" aria-label="Map metric toggle">
-                <button
-                  type="button"
-                  class="map-toggle-btn active"
-                  data-metric="inbound_pct"
-                >
-                  Inbound %
-                </button>
-                <button type="button" class="map-toggle-btn" data-metric="outbound_pct">
-                  Outbound %
-                </button>
-              </div>
-            </div>
+            <label class="map-control" for="map-metric">
+              Map metric:
+              <select id="map-metric">
+                <option value="inbound_pct" selected>Inbound %</option>
+                <option value="outbound_pct">Outbound %</option>
+                <option value="gdp_per_capita">GDP per capita</option>
+              </select>
+            </label>
           </div>
           <div class="map-year-control">
             <label for="map-year-slider">
@@ -81,6 +74,6 @@
 
     <div id="tooltip" class="tooltip" aria-hidden="true"></div>
 
-    <script src="js/main.js?v=5"></script>
+    <script src="js/main.js?v=6"></script>
   </body>
 </html>

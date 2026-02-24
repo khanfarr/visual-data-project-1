@@ -189,15 +189,6 @@ function parseRow(row) {
   };
 }
 
-function setActiveMetricButton(metricKey) {
-  d3.selectAll(".map-toggle-btn").classed("active", false);
-  d3.selectAll(".map-toggle-btn")
-    .filter(function () {
-      return this.dataset.metric === metricKey;
-    })
-    .classed("active", true);
-}
-
 function getMapRowsForYear(year) {
   return mapAllRows.filter((d) => d.Year === year);
 }
@@ -264,7 +255,7 @@ function getFeatureIso3(feature) {
   return null;
 }
 
-function drawLegend(minValue, maxValue, scaleMin, scaleMax) {
+function drawLegend(minValue, maxValue, scaleMin, scaleMax, metricKey) {
   const container = d3.select("#map-legend");
   container.selectAll("*").remove();
 
@@ -291,7 +282,13 @@ function drawLegend(minValue, maxValue, scaleMin, scaleMax) {
     .attr("y1", "0%")
     .attr("y2", "0%");
 
-  if (minValue === 0 && maxValue > 0) {
+  const isGdpMetric = metricKey === "gdp_per_capita";
+  const legendTitle = isGdpMetric ? "GDP per capita (US$)" : "Mobility rate (%)";
+  const legendDescription = isGdpMetric
+    ? "Average income per person"
+    : "Percent of students connected to international study";
+
+  if (minValue === 0 && maxValue > 0 && !isGdpMetric) {
     const rawZeroOffset = (scaleMin / maxValue) * 100;
     const zeroOffset = Math.max(2, Math.min(rawZeroOffset, 12));
     const blendOffset = Math.min(zeroOffset + 4, 18);
@@ -313,7 +310,7 @@ function drawLegend(minValue, maxValue, scaleMin, scaleMax) {
     .attr("y", 22)
     .attr("font-size", 11)
     .attr("fill", "#334155")
-    .text("Mobility rate (%)");
+    .text(legendTitle);
 
   svg
     .append("text")
@@ -321,9 +318,9 @@ function drawLegend(minValue, maxValue, scaleMin, scaleMax) {
     .attr("y", 38)
     .attr("font-size", 10)
     .attr("fill", "#64748b")
-    .text("Percent of students connected to international study");
+    .text(legendDescription);
 
-  if (minValue === 0) {
+  if (minValue === 0 && !isGdpMetric) {
     svg
       .append("text")
       .attr("x", barX)
@@ -348,7 +345,7 @@ function drawLegend(minValue, maxValue, scaleMin, scaleMax) {
     .attr("y", barY + 30)
     .attr("font-size", 11)
     .attr("fill", "#334155")
-    .text(`${formatNumber(minValue === 0 ? scaleMin : minValue)}%`);
+    .text(isGdpMetric ? formatMoney(minValue) : `${formatNumber(minValue === 0 ? scaleMin : minValue)}%`);
 
   svg
     .append("text")
@@ -357,16 +354,19 @@ function drawLegend(minValue, maxValue, scaleMin, scaleMax) {
     .attr("text-anchor", "end")
     .attr("font-size", 11)
     .attr("fill", "#334155")
-    .text(`${formatNumber(maxValue)}%`);
+    .text(isGdpMetric ? formatMoney(maxValue) : `${formatNumber(maxValue)}%`);
 }
 
 function updateMap(metricKey) {
   mapMetricKey = metricKey;
+  const isGdpMetric = metricKey === "gdp_per_capita";
 
   const title =
     metricKey === "inbound_pct"
       ? "Map: Inbound student mobility (%)"
-      : "Map: Outbound student mobility (%)";
+      : metricKey === "outbound_pct"
+      ? "Map: Outbound student mobility (%)"
+      : "Map: GDP per capita (US$)";
   d3.select("#map-title").text(title);
 
   const values = mapDataRows
@@ -383,18 +383,21 @@ function updateMap(metricKey) {
     scaleMax = scaleMin + 1;
   }
 
-  mapColorScale = d3
-    .scaleSequential((t) => d3.interpolateLab("#7fb3d5", "#08306b")(t))
-    .domain([scaleMin, scaleMax]);
+  mapColorScale = isGdpMetric
+    ? d3.scaleSequential(d3.interpolateGreens).domain([scaleMin, scaleMax])
+    : d3.scaleSequential((t) => d3.interpolateLab("#7fb3d5", "#08306b")(t)).domain([
+        scaleMin,
+        scaleMax,
+      ]);
 
   mapCountries.attr("fill", (d) => {
     const value = d.row?.[metricKey];
     if (!Number.isFinite(value)) return "#e5e7eb";
-    if (value === 0) return "#cbd5e1";
+    if (value === 0 && !isGdpMetric) return "#cbd5e1";
     return mapColorScale(value);
   });
 
-  drawLegend(minValue, maxValue, scaleMin, scaleMax);
+  drawLegend(minValue, maxValue, scaleMin, scaleMax, metricKey);
 }
 
 function drawMap(geojson, dataRows) {
@@ -481,13 +484,12 @@ function drawMap(geojson, dataRows) {
       tooltip.style("opacity", 0);
     });
 
-  d3.selectAll(".map-toggle-btn").on("click", function () {
-    const metric = this.dataset.metric;
-    setActiveMetricButton(metric);
-    updateMap(metric);
-  });
+  d3.select("#map-metric")
+    .property("value", mapMetricKey)
+    .on("change", function () {
+      updateMap(this.value);
+    });
 
-  setActiveMetricButton(mapMetricKey);
   updateMap(mapMetricKey);
 }
 
