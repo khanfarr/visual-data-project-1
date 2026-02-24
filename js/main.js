@@ -1,4 +1,4 @@
-const DATA_PATH = "data/student_mobility_merged.csv";
+const DATA_PATH = "data/student-mobility-merged.csv";
 const WORLD_GEOJSON_URL =
   "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson";
 
@@ -7,6 +7,9 @@ let mapCountries;
 let mapColorScale;
 let mapMetricKey = "inbound_pct";
 let mapDataRows = [];
+let mapAllRows = [];
+let mapYears = [];
+let mapGeojson = null;
 
 function formatNumber(value) {
   return d3.format(".2f")(value);
@@ -167,6 +170,47 @@ function parseRow(row) {
     inbound_pct: +row.inbound_pct,
     outbound_pct: +row.outbound_pct,
   };
+}
+
+function setActiveMetricButton(metricKey) {
+  d3.selectAll(".map-toggle-btn").classed("active", false);
+  d3.selectAll(".map-toggle-btn")
+    .filter(function () {
+      return this.dataset.metric === metricKey;
+    })
+    .classed("active", true);
+}
+
+function getMapRowsForYear(year) {
+  return mapAllRows.filter((d) => d.Year === year);
+}
+
+function renderMapForYear(year) {
+  d3.select("#map-year-value").text(year ?? "N/A");
+  drawMap(mapGeojson, getMapRowsForYear(year));
+}
+
+function setupMapTimeline() {
+  const slider = d3.select("#map-year-slider");
+  if (mapYears.length === 0) {
+    slider.property("disabled", true);
+    d3.select("#map-year-value").text("N/A");
+    return;
+  }
+
+  slider
+    .attr("min", 0)
+    .attr("max", Math.max(0, mapYears.length - 1))
+    .attr("step", 1)
+    .property("value", mapYears.length - 1)
+    .property("disabled", mapYears.length === 1)
+    .on("input", function () {
+      const index = +this.value;
+      const selectedYear = mapYears[index];
+      renderMapForYear(selectedYear);
+    });
+
+  renderMapForYear(mapYears[mapYears.length - 1]);
 }
 
 function normalizeName(name) {
@@ -420,12 +464,12 @@ function drawMap(geojson, dataRows) {
 
   d3.selectAll(".map-toggle-btn").on("click", function () {
     const metric = this.dataset.metric;
-    d3.selectAll(".map-toggle-btn").classed("active", false);
-    d3.select(this).classed("active", true);
+    setActiveMetricButton(metric);
     updateMap(metric);
   });
 
-  updateMap("inbound_pct");
+  setActiveMetricButton(mapMetricKey);
+  updateMap(mapMetricKey);
 }
 
 Promise.all([d3.csv(DATA_PATH, parseRow), d3.json(WORLD_GEOJSON_URL)])
@@ -439,6 +483,9 @@ Promise.all([d3.csv(DATA_PATH, parseRow), d3.json(WORLD_GEOJSON_URL)])
 
     const yearShown = d3.max(validRows, (d) => d.Year);
     const filtered = validRows.filter((d) => d.Year === yearShown);
+    mapAllRows = validRows;
+    mapYears = Array.from(new Set(validRows.map((d) => d.Year))).sort((a, b) => a - b);
+    mapGeojson = worldGeojson;
 
     d3.select("#year-value").text(yearShown ?? "N/A");
 
@@ -455,7 +502,7 @@ Promise.all([d3.csv(DATA_PATH, parseRow), d3.json(WORLD_GEOJSON_URL)])
     });
 
     drawScatter(filtered);
-    drawMap(worldGeojson, filtered);
+    setupMapTimeline();
   })
   .catch((error) => {
     console.error("Failed to load dashboard data:", error);

@@ -126,6 +126,20 @@ body {
   min-height: 360px;
 }
 
+.map-year-control {
+  margin: 6px 0 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.map-year-control input[type="range"] {
+  width: 220px;
+}
+
 .country {
   stroke: #ffffff;
   stroke-width: 0.6px;

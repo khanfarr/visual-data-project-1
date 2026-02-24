@@ -39,6 +39,12 @@
               </div>
             </div>
           </div>
+          <div class="map-year-control">
+            <label for="map-year-slider">
+              Map year: <span id="map-year-value">Loading...</span>
+            </label>
+            <input type="range" id="map-year-slider" min="0" max="0" step="1" value="0" />
+          </div>
           <div id="map" class="chart map-chart"></div>
           <div id="map-legend" class="map-legend"></div>
         </article>
@@ -62,6 +68,6 @@
 
     <div id="tooltip" class="tooltip" aria-hidden="true"></div>
 
-    <script src="js/main.js?v=4"></script>
+    <script src="js/main.js?v=5"></script>
   </body>
 </html>
