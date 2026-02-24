@@ -3,14 +3,28 @@ const WORLD_GEOJSON_URL =
   "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson";
 
 const tooltip = d3.select("#tooltip");
+
 let mapCountries;
 let mapColorScale;
 let mapMetricKey = "inbound_pct";
-let mapDataRows = [];
-let mapAllRows = [];
+let mapBaseRows = [];
+let mapVisibleKeySet = null;
 let mapYears = [];
 let mapGeojson = null;
+let appRows = [];
+
 const MIN_CHART_WIDTH = 320;
+
+const state = {
+  analysisYear: null,
+  mapYear: null,
+  selectedKeys: null,
+  histBrush: {
+    inbound_pct: null,
+    outbound_pct: null,
+  },
+  scatterBrush: null,
+};
 
 function createChart({ containerId, margin, height }) {
   const container = d3.select(containerId);
@@ -56,14 +70,104 @@ function formatMoney(value) {
   return Number.isFinite(value) ? `$${d3.format(",.0f")(value)}` : "N/A";
 }
 
-// Histogram Chart for both inbound and outbound mobility
-function drawHistogram({ containerId, values, xLabel }) {
+function getRowKey(row) {
+  if (typeof row.Code === "string" && row.Code.length === 3) {
+    return row.Code.toUpperCase();
+  }
+  return row.Entity;
+}
+
+function getAnalysisRows() {
+  return appRows.filter((d) => d.Year === state.analysisYear);
+}
+
+function getMapRowsForYear(year) {
+  return appRows.filter((d) => d.Year === year);
+}
+
+function getFilteredRows(rows) {
+  if (!state.selectedKeys) return rows;
+  return rows.filter((d) => state.selectedKeys.has(getRowKey(d)));
+}
+
+function computeSelection(rows) {
+  let currentSelection = null;
+
+  function intersect(nextSet) {
+    if (currentSelection === null) {
+      currentSelection = nextSet;
+      return;
+    }
+    currentSelection = new Set([...currentSelection].filter((key) => nextSet.has(key)));
+  }
+
+  const inboundRange = state.histBrush.inbound_pct;
+  if (inboundRange) {
+    const [minValue, maxValue] = inboundRange;
+    intersect(
+      new Set(
+        rows
+          .filter((d) => d.inbound_pct >= minValue && d.inbound_pct <= maxValue)
+          .map((d) => getRowKey(d))
+      )
+    );
+  }
+
+  const outboundRange = state.histBrush.outbound_pct;
+  if (outboundRange) {
+    const [minValue, maxValue] = outboundRange;
+    intersect(
+      new Set(
+        rows
+          .filter((d) => d.outbound_pct >= minValue && d.outbound_pct <= maxValue)
+          .map((d) => getRowKey(d))
+      )
+    );
+  }
+
+  if (state.scatterBrush) {
+    const { outbound, inbound } = state.scatterBrush;
+    intersect(
+      new Set(
+        rows
+          .filter(
+            (d) =>
+              d.outbound_pct >= outbound[0] &&
+              d.outbound_pct <= outbound[1] &&
+              d.inbound_pct >= inbound[0] &&
+              d.inbound_pct <= inbound[1]
+          )
+          .map((d) => getRowKey(d))
+      )
+    );
+  }
+
+  state.selectedKeys = currentSelection;
+}
+
+function updateSelectionSummary(totalCount, selectedCount) {
+  const summary = d3.select("#selection-summary");
+  if (summary.empty()) return;
+
+  if (!state.selectedKeys) {
+    summary.text(`Showing all ${totalCount} countries. Brush a chart to filter.`);
+    return;
+  }
+
+  summary.text(`Showing ${selectedCount} of ${totalCount} countries from brushed selection.`);
+}
+
+// Histogram brush filters countries by value range; bars are redrawn from the filtered set.
+function drawHistogram({ containerId, allRows, filteredRows, metricKey, xLabel }) {
   const margin = { top: 20, right: 20, bottom: 52, left: 56 };
   const height = 320;
   const { g, innerWidth, innerHeight } = createChart({ containerId, margin, height });
 
+  const allValues = allRows.map((d) => d[metricKey]);
+  const filteredValues = filteredRows.map((d) => d[metricKey]);
+
   const xMin = 0;
-  const xMax = d3.max(values) ?? 0;
+  const xMax = d3.max(allValues) ?? 0;
 
   const x = d3
     .scaleLinear()
@@ -71,19 +175,18 @@ function drawHistogram({ containerId, values, xLabel }) {
     .nice()
     .range([0, innerWidth]);
 
-  const bins = d3
-    .bin()
-    .domain(x.domain())
-    .thresholds(20)(values);
+  const binGenerator = d3.bin().domain(x.domain()).thresholds(20);
+  const allBins = binGenerator(allValues);
+  const filteredBins = binGenerator(filteredValues);
 
   const y = d3
     .scaleLinear()
-    .domain([0, d3.max(bins, (d) => d.length) || 1])
+    .domain([0, d3.max(allBins, (d) => d.length) || 1])
     .nice()
     .range([innerHeight, 0]);
 
   g.selectAll("rect")
-    .data(bins)
+    .data(filteredBins)
     .join("rect")
     .attr("class", "bar")
     .attr("x", (d) => x(d.x0) + 1)
@@ -118,10 +221,38 @@ function drawHistogram({ containerId, values, xLabel }) {
     .attr("y", -40)
     .attr("text-anchor", "middle")
     .text("Count of countries");
+
+  const brush = d3
+    .brushX()
+    .extent([
+      [0, 0],
+      [innerWidth, innerHeight],
+    ])
+    .on("end", (event) => {
+      if (!event.sourceEvent) return;
+
+      if (!event.selection) {
+        state.histBrush[metricKey] = null;
+        renderDashboard();
+        return;
+      }
+
+      const [rawMin, rawMax] = event.selection.map((pixel) => x.invert(pixel));
+      const minValue = Math.min(rawMin, rawMax);
+      const maxValue = Math.max(rawMin, rawMax);
+      state.histBrush[metricKey] = [minValue, maxValue];
+      renderDashboard();
+    });
+
+  const brushLayer = g.append("g").attr("class", "brush").call(brush);
+  const activeRange = state.histBrush[metricKey];
+  if (activeRange) {
+    brushLayer.call(brush.move, [x(activeRange[0]), x(activeRange[1])]);
+  }
 }
 
-// Scatterplot Chart for correlation between inbound and outbound mobility
-function drawScatter(data) {
+// Scatterplot brush filters countries by rectangular inbound/outbound range.
+function drawScatter({ allRows, filteredRows }) {
   const margin = { top: 20, right: 20, bottom: 54, left: 58 };
   const height = 360;
   const { g, innerWidth, innerHeight } = createChart({
@@ -132,13 +263,13 @@ function drawScatter(data) {
 
   const x = d3
     .scaleLinear()
-    .domain([0, d3.max(data, (d) => d.outbound_pct) || 1])
+    .domain([0, d3.max(allRows, (d) => d.outbound_pct) || 1])
     .nice()
     .range([0, innerWidth]);
 
   const y = d3
     .scaleLinear()
-    .domain([0, d3.max(data, (d) => d.inbound_pct) || 1])
+    .domain([0, d3.max(allRows, (d) => d.inbound_pct) || 1])
     .nice()
     .range([innerHeight, 0]);
 
@@ -149,7 +280,7 @@ function drawScatter(data) {
   g.append("g").call(d3.axisLeft(y));
 
   g.selectAll("circle")
-    .data(data)
+    .data(filteredRows)
     .join("circle")
     .attr("class", "dot")
     .attr("cx", (d) => x(d.outbound_pct))
@@ -179,6 +310,41 @@ function drawScatter(data) {
     .attr("y", -42)
     .attr("text-anchor", "middle")
     .text("Inbound mobility (%)");
+
+  const brush = d3
+    .brush()
+    .extent([
+      [0, 0],
+      [innerWidth, innerHeight],
+    ])
+    .on("end", (event) => {
+      if (!event.sourceEvent) return;
+
+      if (!event.selection) {
+        state.scatterBrush = null;
+        renderDashboard();
+        return;
+      }
+
+      const [[x0, y0], [x1, y1]] = event.selection;
+      const outboundRaw = [x.invert(x0), x.invert(x1)];
+      const inboundRaw = [y.invert(y0), y.invert(y1)];
+
+      state.scatterBrush = {
+        outbound: [Math.min(outboundRaw[0], outboundRaw[1]), Math.max(outboundRaw[0], outboundRaw[1])],
+        inbound: [Math.min(inboundRaw[0], inboundRaw[1]), Math.max(inboundRaw[0], inboundRaw[1])],
+      };
+
+      renderDashboard();
+    });
+
+  const brushLayer = g.append("g").attr("class", "brush").call(brush);
+  if (state.scatterBrush) {
+    brushLayer.call(brush.move, [
+      [x(state.scatterBrush.outbound[0]), y(state.scatterBrush.inbound[1])],
+      [x(state.scatterBrush.outbound[1]), y(state.scatterBrush.inbound[0])],
+    ]);
+  }
 }
 
 function parseRow(row) {
@@ -190,38 +356,6 @@ function parseRow(row) {
     outbound_pct: +row.outbound_pct,
     gdp_per_capita: +row.gdp_per_capita,
   };
-}
-
-function getMapRowsForYear(year) {
-  return mapAllRows.filter((d) => d.Year === year);
-}
-
-function renderMapForYear(year) {
-  d3.select("#map-year-value").text(year ?? "N/A");
-  drawMap(mapGeojson, getMapRowsForYear(year));
-}
-
-function setupMapTimeline() {
-  const slider = d3.select("#map-year-slider");
-  if (mapYears.length === 0) {
-    slider.property("disabled", true);
-    d3.select("#map-year-value").text("N/A");
-    return;
-  }
-
-  slider
-    .attr("min", 0)
-    .attr("max", Math.max(0, mapYears.length - 1))
-    .attr("step", 1)
-    .property("value", mapYears.length - 1)
-    .property("disabled", mapYears.length === 1)
-    .on("input", function () {
-      const index = +this.value;
-      const selectedYear = mapYears[index];
-      renderMapForYear(selectedYear);
-    });
-
-  renderMapForYear(mapYears[mapYears.length - 1]);
 }
 
 function normalizeName(name) {
@@ -371,7 +505,7 @@ function updateMap(metricKey) {
 
   d3.select("#map-title").text(mapTitles[metricKey] || mapTitles.inbound_pct);
 
-  const values = mapDataRows
+  const values = mapBaseRows
     .map((d) => d[metricKey])
     .filter((value) => Number.isFinite(value));
   const positiveValues = values.filter((value) => value > 0);
@@ -394,6 +528,11 @@ function updateMap(metricKey) {
 
   mapCountries.attr("fill", (d) => {
     const value = d.row?.[metricKey];
+    if (!d.row) return "#e5e7eb";
+
+    const isVisible = !mapVisibleKeySet || mapVisibleKeySet.has(getRowKey(d.row));
+    if (!isVisible) return "#f3f4f6";
+
     if (!Number.isFinite(value)) return "#e5e7eb";
     if (value === 0 && !isGdpMetric) return "#cbd5e1";
     return mapColorScale(value);
@@ -402,9 +541,10 @@ function updateMap(metricKey) {
   drawLegend(minValue, maxValue, scaleMin, scaleMax, metricKey);
 }
 
-// Map Chart for visualizing either inbound mobility, outbound mobility, or GDP per capita across countries. 
-function drawMap(geojson, dataRows) {
-  mapDataRows = dataRows;
+function drawMap(geojson, dataRows, selectedKeys) {
+  mapBaseRows = dataRows;
+  mapVisibleKeySet = selectedKeys ? new Set(selectedKeys) : null;
+
   const margin = { top: 10, right: 10, bottom: 10, left: 10 };
   const height = 360;
   const { g, innerWidth, innerHeight } = createChart({
@@ -432,8 +572,6 @@ function drawMap(geojson, dataRows) {
     if (iso3 && byIso.has(iso3)) {
       row = byIso.get(iso3);
     } else {
-      // Name matching fallback for GeoJSON files that do not include ISO-3 codes.
-      // This may be imperfect because country names can differ across datasets.
       const nameKey = normalizeName(featureName);
       row = byName.get(nameKey) || null;
     }
@@ -452,6 +590,15 @@ function drawMap(geojson, dataRows) {
 
       if (!d.row) {
         showTooltip(event, `<strong>${d.featureName}</strong><br/>No data`);
+        return;
+      }
+
+      const isVisible = !mapVisibleKeySet || mapVisibleKeySet.has(getRowKey(d.row));
+      if (!isVisible) {
+        showTooltip(
+          event,
+          `<strong>${d.row.Entity}</strong><br/>Filtered out by current brush selection`
+        );
         return;
       }
 
@@ -478,6 +625,72 @@ function drawMap(geojson, dataRows) {
   updateMap(mapMetricKey);
 }
 
+function renderMapForYear(year) {
+  state.mapYear = year;
+  d3.select("#map-year-value").text(year ?? "N/A");
+  drawMap(mapGeojson, getMapRowsForYear(year), state.selectedKeys);
+}
+
+function setupMapTimeline() {
+  const slider = d3.select("#map-year-slider");
+  if (mapYears.length === 0) {
+    slider.property("disabled", true);
+    d3.select("#map-year-value").text("N/A");
+    return;
+  }
+
+  slider
+    .attr("min", 0)
+    .attr("max", Math.max(0, mapYears.length - 1))
+    .attr("step", 1)
+    .property("value", mapYears.length - 1)
+    .property("disabled", mapYears.length === 1)
+    .on("input", function () {
+      const index = +this.value;
+      renderMapForYear(mapYears[index]);
+    });
+
+  renderMapForYear(mapYears[mapYears.length - 1]);
+}
+
+function clearBrushes() {
+  state.histBrush.inbound_pct = null;
+  state.histBrush.outbound_pct = null;
+  state.scatterBrush = null;
+  state.selectedKeys = null;
+  renderDashboard();
+}
+
+function renderDashboard() {
+  const analysisRows = getAnalysisRows();
+  computeSelection(analysisRows);
+  const filteredRows = getFilteredRows(analysisRows);
+
+  drawHistogram({
+    containerId: "#hist-inbound",
+    allRows: analysisRows,
+    filteredRows,
+    metricKey: "inbound_pct",
+    xLabel: "Inbound mobility (%)",
+  });
+
+  drawHistogram({
+    containerId: "#hist-outbound",
+    allRows: analysisRows,
+    filteredRows,
+    metricKey: "outbound_pct",
+    xLabel: "Outbound mobility (%)",
+  });
+
+  drawScatter({ allRows: analysisRows, filteredRows });
+
+  if (state.mapYear !== null) {
+    renderMapForYear(state.mapYear);
+  }
+
+  updateSelectionSummary(analysisRows.length, filteredRows.length);
+}
+
 Promise.all([d3.csv(DATA_PATH, parseRow), d3.json(WORLD_GEOJSON_URL)])
   .then(([rows, worldGeojson]) => {
     const validRows = rows.filter(
@@ -487,31 +700,19 @@ Promise.all([d3.csv(DATA_PATH, parseRow), d3.json(WORLD_GEOJSON_URL)])
         Number.isFinite(d.outbound_pct)
     );
 
-    const yearShown = d3.max(validRows, (d) => d.Year);
-    const filtered = validRows.filter((d) => d.Year === yearShown);
-    mapAllRows = validRows;
-    mapYears = Array.from(new Set(validRows.map((d) => d.Year))).sort((a, b) => a - b);
+    appRows = validRows;
     mapGeojson = worldGeojson;
 
-    d3.select("#year-value").text(yearShown ?? "N/A");
+    state.analysisYear = d3.max(validRows, (d) => d.Year);
+    mapYears = Array.from(new Set(validRows.map((d) => d.Year))).sort((a, b) => a - b);
+    state.mapYear = mapYears[mapYears.length - 1] ?? null;
 
-    drawHistogram({
-      containerId: "#hist-inbound",
-      values: filtered.map((d) => d.inbound_pct),
-      xLabel: "Inbound mobility (%)",
-    });
-
-    drawHistogram({
-      containerId: "#hist-outbound",
-      values: filtered.map((d) => d.outbound_pct),
-      xLabel: "Outbound mobility (%)",
-    });
-
-    drawScatter(filtered);
     setupMapTimeline();
+    renderDashboard();
+
+    d3.select("#clear-brushes").on("click", clearBrushes);
   })
   .catch((error) => {
     console.error("Failed to load dashboard data:", error);
-    d3.select("#year-value").text("Could not load data");
     d3.select("#map").text("Could not load map data.");
   });
