@@ -7,11 +7,13 @@ Live Website: https://visual-data-project-1.khansfareena.workers.dev/
 - Patterns and differences by region
 - How common high/low values are globally 
 - The relationship between sending and receiving 
-
 - Access to higher education
 - Opportunity and inequality
 - Globalization and “where talent goes”
 - Whether a country is an education destination (attracts students) or a sender (students leave)
+- Do wealthier countries attract more students (higher inbound mobility)?
+- Do poorer/smaller countries have higher outbound mobility (more students leave)?
+- Are there clusters in the scatterplot if you color points by GDP?
 
 Data sources:
 - [Share of students from abroad](https://ourworldindata.org/grapher/share-of-students-from-abroad?mapSelect=USA~ETH~LBY)
