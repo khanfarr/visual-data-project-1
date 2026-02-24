@@ -13,6 +13,7 @@ let appRows = [];
 
 const state = {
   mapYear: null,
+  brushMode: false,
   selectedKeys: null,
   histBrush: {
     inbound_pct: null,
@@ -102,6 +103,10 @@ function updateSelectionSummary(totalCount, selectedCount) {
   summary.text(`Showing ${selectedCount} of ${totalCount} countries from brushed selection.`);
 }
 
+function updateBrushModeButton() {
+  d3.select("#toggle-brush-mode").text(`Brush mode: ${state.brushMode ? "On" : "Off"}`);
+}
+
 function parseRow(row) {
   return {
     Entity: row.Entity,
@@ -181,6 +186,7 @@ function renderDashboard() {
     metricKey: "inbound_pct",
     xLabel: "Inbound mobility (%)",
     activeRange: state.histBrush.inbound_pct,
+    enableBrush: state.brushMode,
     onBrushEnd: (range) => {
       state.histBrush.inbound_pct = range;
       renderDashboard();
@@ -194,6 +200,7 @@ function renderDashboard() {
     metricKey: "outbound_pct",
     xLabel: "Outbound mobility (%)",
     activeRange: state.histBrush.outbound_pct,
+    enableBrush: state.brushMode,
     onBrushEnd: (range) => {
       state.histBrush.outbound_pct = range;
       renderDashboard();
@@ -204,6 +211,7 @@ function renderDashboard() {
     allRows: analysisRows,
     filteredRows,
     activeBrush: state.scatterBrush,
+    enableBrush: state.brushMode,
     onBrushEnd: (brush) => {
       state.scatterBrush = brush;
       renderDashboard();
@@ -233,7 +241,14 @@ Promise.all([d3.csv(DATA_PATH, parseRow), d3.json(WORLD_GEOJSON_URL)])
     state.mapYear = mapYears[mapYears.length - 1] ?? null;
 
     setupMapTimeline();
+    updateBrushModeButton();
     renderDashboard();
+
+    d3.select("#toggle-brush-mode").on("click", () => {
+      state.brushMode = !state.brushMode;
+      updateBrushModeButton();
+      renderDashboard();
+    });
 
     d3.select("#clear-brushes").on("click", clearBrushes);
   })

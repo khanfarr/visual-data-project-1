@@ -8,6 +8,7 @@ export function drawHistogram({
   metricKey,
   xLabel,
   activeRange,
+  enableBrush,
   onBrushEnd,
 }) {
   const margin = { top: 20, right: 20, bottom: 52, left: 56 };
@@ -73,26 +74,28 @@ export function drawHistogram({
     .attr("text-anchor", "middle")
     .text("Count of countries");
 
-  const brush = d3
-    .brushX()
-    .extent([
-      [0, 0],
-      [innerWidth, innerHeight],
-    ])
-    .on("end", (event) => {
-      if (!event.sourceEvent) return;
+  if (enableBrush) {
+    const brush = d3
+      .brushX()
+      .extent([
+        [0, 0],
+        [innerWidth, innerHeight],
+      ])
+      .on("end", (event) => {
+        if (!event.sourceEvent) return;
 
-      if (!event.selection) {
-        onBrushEnd(null);
-        return;
-      }
+        if (!event.selection) {
+          onBrushEnd(null);
+          return;
+        }
 
-      const [rawMin, rawMax] = event.selection.map((pixel) => x.invert(pixel));
-      onBrushEnd([Math.min(rawMin, rawMax), Math.max(rawMin, rawMax)]);
-    });
+        const [rawMin, rawMax] = event.selection.map((pixel) => x.invert(pixel));
+        onBrushEnd([Math.min(rawMin, rawMax), Math.max(rawMin, rawMax)]);
+      });
 
-  const brushLayer = g.append("g").attr("class", "brush").call(brush);
-  if (activeRange) {
-    brushLayer.call(brush.move, [x(activeRange[0]), x(activeRange[1])]);
+    const brushLayer = g.append("g").attr("class", "brush").call(brush);
+    if (activeRange) {
+      brushLayer.call(brush.move, [x(activeRange[0]), x(activeRange[1])]);
+    }
   }
 }

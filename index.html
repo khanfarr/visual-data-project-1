@@ -4,7 +4,7 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Global Student Mobility</title>
-    <link rel="stylesheet" href="style.css?v=6" />
+    <link rel="stylesheet" href="style.css?v=7" />
     <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
   </head>
   <body>
@@ -31,6 +31,7 @@
           >
         </p>
         <div class="selection-controls">
+          <button id="toggle-brush-mode" type="button">Brush mode: Off</button>
           <button id="clear-brushes" type="button">Clear brushed selection</button>
           <span id="selection-summary">Showing all countries. Brush one of the charts below the map to filter by country.</span>
         </div>
@@ -62,22 +63,31 @@
         <article class="chart-card">
           <h2 id="hist-inbound-title">Inbound student mobility (%)</h2>
           <div id="hist-inbound" class="chart"></div>
+          <p class="chart-note">
+            Shows where countries cluster on inbound mobility and which ranges are most common.
+          </p>
         </article>
 
         <article class="chart-card">
           <h2 id="hist-outbound-title">Outbound student mobility (%)</h2>
           <div id="hist-outbound" class="chart"></div>
+          <p class="chart-note">
+            Shows whether outbound mobility is concentrated in a few ranges or spread widely.
+          </p>
         </article>
 
         <article class="chart-card">
           <h2 id="scatter-title">Outbound vs Inbound mobility</h2>
           <div id="scatter" class="chart scatter-chart"></div>
+          <p class="chart-note">
+            Compares outbound and inbound mobility per country to show whether higher senders are also higher receivers.
+          </p>
         </article>
       </section>
     </main>
 
     <div id="tooltip" class="tooltip" aria-hidden="true"></div>
 
-    <script type="module" src="js/main.js?v=21"></script>
+    <script type="module" src="js/main.js?v=23"></script>
   </body>
 </html>
