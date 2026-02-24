@@ -65,7 +65,19 @@ function drawHistogram({ containerId, values, xLabel }) {
     .attr("x", (d) => x(d.x0) + 1)
     .attr("y", (d) => y(d.length))
     .attr("width", (d) => Math.max(0, x(d.x1) - x(d.x0) - 1))
-    .attr("height", (d) => innerHeight - y(d.length));
+    .attr("height", (d) => innerHeight - y(d.length))
+    .on("mousemove", (event, d) => {
+      tooltip
+        .style("opacity", 1)
+        .style("left", `${event.pageX + 12}px`)
+        .style("top", `${event.pageY - 28}px`)
+        .html(
+          `Range: ${formatNumber(d.x0)}% to ${formatNumber(d.x1)}%<br/>Countries: ${d.length}`
+        );
+    })
+    .on("mouseleave", () => {
+      tooltip.style("opacity", 0);
+    });
 
   g.append("g")
     .attr("transform", `translate(0,${innerHeight})`)
