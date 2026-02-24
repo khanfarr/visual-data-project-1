@@ -36,8 +36,18 @@ body {
   color: var(--muted);
 }
 
+.meta a {
+  color: var(--accent-dark);
+  text-decoration: none;
+}
+
+.meta a:hover {
+  text-decoration: underline;
+}
+
 .description {
   margin: 10px 0 0;
+  font-size: 1.03rem;
 }
 
 .charts-grid {
