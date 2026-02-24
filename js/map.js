@@ -18,6 +18,10 @@ let mapBaseRows = [];
 let mapVisibleKeySet = null;
 let mapCurrentYear = null;
 
+function isMobilityMetric(metricKey) {
+  return metricKey === "inbound_pct" || metricKey === "outbound_pct";
+}
+
 function drawLegend(minValue, maxValue, scaleMin, scaleMax, metricKey) {
   const container = d3.select("#map-legend");
   container.selectAll("*").remove();
@@ -45,26 +49,20 @@ function drawLegend(minValue, maxValue, scaleMin, scaleMax, metricKey) {
     .attr("y1", "0%")
     .attr("y2", "0%");
 
-  const isGdpMetric = metricKey === "gdp_per_capita";
-  const legendTitle = isGdpMetric ? "GDP per capita (US$)" : "Mobility rate (%)";
-  const legendDescription = isGdpMetric
-    ? "Average income per person"
-    : "Percent of students connected to international study";
+  const isMobility = isMobilityMetric(metricKey);
+  const legendTitle = isMobility ? "Mobility rate (%)" : "GDP per capita (US$)";
+  const legendDescription = isMobility
+    ? "Percent of students connected to international study"
+    : "Average income per person";
 
-  if (minValue === 0 && maxValue > 0 && !isGdpMetric) {
-    const rawZeroOffset = (scaleMin / maxValue) * 100;
-    const zeroOffset = Math.max(2, Math.min(rawZeroOffset, 12));
-    const blendOffset = Math.min(zeroOffset + 4, 18);
-    gradient.append("stop").attr("offset", "0%").attr("stop-color", "#cbd5e1");
-    gradient.append("stop").attr("offset", `${zeroOffset}%`).attr("stop-color", "#cbd5e1");
+  const stopCount = 12;
+  for (let i = 0; i <= stopCount; i += 1) {
+    const t = i / stopCount;
+    const value = scaleMin + t * (scaleMax - scaleMin);
     gradient
       .append("stop")
-      .attr("offset", `${blendOffset}%`)
-      .attr("stop-color", mapColorScale(scaleMin));
-    gradient.append("stop").attr("offset", "100%").attr("stop-color", mapColorScale(scaleMax));
-  } else {
-    gradient.append("stop").attr("offset", "0%").attr("stop-color", mapColorScale(scaleMin));
-    gradient.append("stop").attr("offset", "100%").attr("stop-color", mapColorScale(scaleMax));
+      .attr("offset", `${t * 100}%`)
+      .attr("stop-color", mapColorScale(value));
   }
 
   svg
@@ -83,16 +81,6 @@ function drawLegend(minValue, maxValue, scaleMin, scaleMax, metricKey) {
     .attr("fill", "#64748b")
     .text(legendDescription);
 
-  if (minValue === 0 && !isGdpMetric) {
-    svg
-      .append("text")
-      .attr("x", barX)
-      .attr("y", 50)
-      .attr("font-size", 10)
-      .attr("fill", "#64748b")
-      .text("0% is shown as gray on the map");
-  }
-
   svg
     .append("rect")
     .attr("x", barX)
@@ -108,7 +96,7 @@ function drawLegend(minValue, maxValue, scaleMin, scaleMax, metricKey) {
     .attr("y", barY + 30)
     .attr("font-size", 11)
     .attr("fill", "#334155")
-    .text(isGdpMetric ? formatMoney(minValue) : `${formatNumber(minValue === 0 ? scaleMin : minValue)}%`);
+    .text(isMobility ? `${formatNumber(minValue === 0 ? scaleMin : minValue)}%` : formatMoney(minValue));
 
   svg
     .append("text")
@@ -117,12 +105,12 @@ function drawLegend(minValue, maxValue, scaleMin, scaleMax, metricKey) {
     .attr("text-anchor", "end")
     .attr("font-size", 11)
     .attr("fill", "#334155")
-    .text(isGdpMetric ? formatMoney(maxValue) : `${formatNumber(maxValue)}%`);
+    .text(isMobility ? `${formatNumber(maxValue)}%` : formatMoney(maxValue));
 }
 
 function updateMap(metricKey) {
   mapMetricKey = metricKey;
-  const isGdpMetric = metricKey === "gdp_per_capita";
+  const isMobility = isMobilityMetric(metricKey);
   const mapTitles = {
     inbound_pct: "Map: Inbound student mobility (%)",
     outbound_pct: "Map: Outbound student mobility (%)",
@@ -146,12 +134,26 @@ function updateMap(metricKey) {
     scaleMax = scaleMin + 1;
   }
 
-  mapColorScale = isGdpMetric
-    ? d3.scaleSequential(d3.interpolateGreens).domain([scaleMin, scaleMax])
-    : d3.scaleSequential((t) => d3.interpolateLab("#7fb3d5", "#08306b")(t)).domain([
-        scaleMin,
-        scaleMax,
-      ]);
+  const mobilityBlueInterpolator = d3.interpolateRgbBasis([
+    "#f8fbff",
+    "#e0f2fe",
+    "#bae6fd",
+    "#7dd3fc",
+    "#38bdf8",
+    "#0ea5e9",
+    "#0284c7",
+    "#1d4ed8",
+    "#1e3a8a",
+    "#172554",
+  ]);
+
+  mapColorScale = isMobility
+    ? d3
+        .scaleSequentialPow(mobilityBlueInterpolator)
+        .domain([scaleMin, scaleMax])
+        .exponent(0.45)
+        .clamp(true)
+    : d3.scaleSequential(d3.interpolateGreens).domain([scaleMin, scaleMax]);
 
   mapCountries.attr("fill", (d) => {
     const value = d.row?.[metricKey];
@@ -161,7 +163,7 @@ function updateMap(metricKey) {
     if (!isVisible) return "#f3f4f6";
 
     if (!Number.isFinite(value)) return "#e5e7eb";
-    if (value === 0 && !isGdpMetric) return "#cbd5e1";
+    if (value === 0 && isMobility) return "#cbd5e1";
     return mapColorScale(value);
   });
 
