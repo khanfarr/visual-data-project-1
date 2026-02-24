@@ -1,0 +1,205 @@
+:root {
+  --bg: #f6f8fb;
+  --card: #ffffff;
+  --text: #1f2937;
+  --muted: #4b5563;
+  --border: #d8e0ea;
+  --accent: #4f7ea8;
+  --accent-dark: #2f5f8d;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+  line-height: 1.5;
+}
+
+.page {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 24px 16px 40px;
+}
+
+.page-header h1 {
+  margin: 0 0 10px;
+  font-size: 1.8rem;
+}
+
+.meta {
+  margin: 2px 0;
+  color: var(--muted);
+}
+
+.meta a {
+  color: var(--accent-dark);
+  text-decoration: none;
+}
+
+.meta a:hover {
+  text-decoration: underline;
+}
+
+.description {
+  margin: 10px 0 0;
+  font-size: 1.03rem;
+}
+
+.charts-grid {
+  margin-top: 20px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 16px;
+}
+
+.chart-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.chart-card h2 {
+  margin: 0 0 8px;
+  font-size: 1rem;
+}
+
+.chart {
+  width: 100%;
+  min-height: 320px;
+}
+
+.wide {
+  grid-column: 1 / -1;
+}
+
+.map-header {
+  display: flex;
+  gap: 12px;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.map-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.9rem;
+  color: var(--muted);
+}
+
+.map-toggle {
+  display: inline-flex;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  overflow: hidden;
+  background: #eef3f8;
+  padding: 2px;
+}
+
+.map-toggle-btn {
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  padding: 4px 10px;
+  font-size: 0.84rem;
+  border-radius: 999px;
+  line-height: 1.2;
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.map-toggle-btn + .map-toggle-btn {
+  margin-left: 2px;
+}
+
+.map-toggle-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+
+.map-toggle-btn:hover {
+  background: #dfe8f2;
+}
+
+.map-toggle-btn.active:hover {
+  background: var(--accent-dark);
+}
+
+.map-chart {
+  min-height: 360px;
+}
+
+.map-year-control {
+  margin: 6px 0 8px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.map-year-control input[type="range"] {
+  width: 220px;
+}
+
+.country {
+  stroke: #ffffff;
+  stroke-width: 0.6px;
+}
+
+.map-legend {
+  margin-top: 6px;
+}
+
+.axis-label {
+  fill: var(--text);
+  font-size: 12px;
+}
+
+.tick text {
+  font-size: 11px;
+}
+
+.bar {
+  fill: var(--accent);
+}
+
+.dot {
+  fill: var(--accent);
+  opacity: 0.85;
+}
+
+.dot:hover {
+  fill: var(--accent-dark);
+}
+
+.tooltip {
+  position: absolute;
+  pointer-events: none;
+  background: #111827;
+  color: #f9fafb;
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 12px;
+  line-height: 1.35;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+}
+
+@media (max-width: 680px) {
+  .chart {
+    min-height: 280px;
+  }
+
+  .map-chart {
+    min-height: 300px;
+  }
+}
