@@ -16,6 +16,7 @@ let mapColorScale;
 let mapMetricKey = "inbound_pct";
 let mapBaseRows = [];
 let mapVisibleKeySet = null;
+let mapCurrentYear = null;
 
 function drawLegend(minValue, maxValue, scaleMin, scaleMax, metricKey) {
   const container = d3.select("#map-legend");
@@ -127,8 +128,9 @@ function updateMap(metricKey) {
     outbound_pct: "Map: Outbound student mobility (%)",
     gdp_per_capita: "Map: GDP per capita (US$)",
   };
+  const yearSuffix = Number.isFinite(mapCurrentYear) ? ` during ${mapCurrentYear}` : "";
 
-  d3.select("#map-title").text(mapTitles[metricKey] || mapTitles.inbound_pct);
+  d3.select("#map-title").text(`${mapTitles[metricKey] || mapTitles.inbound_pct}${yearSuffix}`);
 
   const values = mapBaseRows
     .map((d) => d[metricKey])
@@ -166,9 +168,10 @@ function updateMap(metricKey) {
   drawLegend(minValue, maxValue, scaleMin, scaleMax, metricKey);
 }
 
-export function drawMap({ geojson, dataRows, selectedKeys }) {
+export function drawMap({ geojson, dataRows, selectedKeys, year }) {
   mapBaseRows = dataRows;
   mapVisibleKeySet = selectedKeys ? new Set(selectedKeys) : null;
+  mapCurrentYear = year;
 
   const margin = { top: 10, right: 10, bottom: 10, left: 10 };
   const height = 360;

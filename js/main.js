@@ -12,7 +12,6 @@ let mapGeojson = null;
 let appRows = [];
 
 const state = {
-  analysisYear: null,
   mapYear: null,
   selectedKeys: null,
   histBrush: {
@@ -23,7 +22,8 @@ const state = {
 };
 
 function getAnalysisRows() {
-  return appRows.filter((d) => d.Year === state.analysisYear);
+  const activeYear = state.mapYear ?? d3.max(appRows, (d) => d.Year);
+  return appRows.filter((d) => d.Year === activeYear);
 }
 
 function getMapRowsForYear(year) {
@@ -120,7 +120,21 @@ function renderMapForYear(year) {
     geojson: mapGeojson,
     dataRows: getMapRowsForYear(year),
     selectedKeys: state.selectedKeys,
+    year,
   });
+}
+
+function updateChartTitles(year) {
+  const yearText = Number.isFinite(year) ? ` during ${year}` : "";
+  d3.select("#hist-inbound-title").text(
+    `Distribution: Inbound student mobility (%)${yearText}`
+  );
+  d3.select("#hist-outbound-title").text(
+    `Distribution: Outbound student mobility (%)${yearText}`
+  );
+  d3.select("#scatter-title").text(
+    `Correlation: Outbound vs Inbound mobility${yearText}`
+  );
 }
 
 function setupMapTimeline() {
@@ -139,10 +153,9 @@ function setupMapTimeline() {
     .property("disabled", mapYears.length === 1)
     .on("input", function () {
       const index = +this.value;
-      renderMapForYear(mapYears[index]);
+      state.mapYear = mapYears[index];
+      renderDashboard();
     });
-
-  renderMapForYear(mapYears[mapYears.length - 1]);
 }
 
 function clearBrushes() {
@@ -155,6 +168,9 @@ function clearBrushes() {
 
 function renderDashboard() {
   const analysisRows = getAnalysisRows();
+  const activeYear = state.mapYear ?? null;
+
+  updateChartTitles(activeYear);
   computeSelection(analysisRows);
   const filteredRows = getFilteredRows(analysisRows);
 
@@ -213,7 +229,6 @@ Promise.all([d3.csv(DATA_PATH, parseRow), d3.json(WORLD_GEOJSON_URL)])
     appRows = validRows;
     mapGeojson = worldGeojson;
 
-    state.analysisYear = d3.max(validRows, (d) => d.Year);
     mapYears = Array.from(new Set(validRows.map((d) => d.Year))).sort((a, b) => a - b);
     state.mapYear = mapYears[mapYears.length - 1] ?? null;
 
