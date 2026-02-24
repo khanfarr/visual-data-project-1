@@ -56,6 +56,7 @@ function formatMoney(value) {
   return Number.isFinite(value) ? `$${d3.format(",.0f")(value)}` : "N/A";
 }
 
+// Histogram Chart for both inbound and outbound mobility
 function drawHistogram({ containerId, values, xLabel }) {
   const margin = { top: 20, right: 20, bottom: 52, left: 56 };
   const height = 320;
@@ -119,6 +120,7 @@ function drawHistogram({ containerId, values, xLabel }) {
     .text("Count of countries");
 }
 
+// Scatterplot Chart for correlation between inbound and outbound mobility
 function drawScatter(data) {
   const margin = { top: 20, right: 20, bottom: 54, left: 58 };
   const height = 360;
@@ -400,6 +402,7 @@ function updateMap(metricKey) {
   drawLegend(minValue, maxValue, scaleMin, scaleMax, metricKey);
 }
 
+// Map Chart for visualizing either inbound mobility, outbound mobility, or GDP per capita across countries. 
 function drawMap(geojson, dataRows) {
   mapDataRows = dataRows;
   const margin = { top: 10, right: 10, bottom: 10, left: 10 };
