@@ -167,16 +167,16 @@ body {
 }
 
 .bar {
-  fill: #38bdf8;
+  fill: #779cd1;
 }
 
 .dot {
-  fill: #38bdf8;
+  fill: #779cd1;
   opacity: 0.85;
 }
 
 .dot:hover {
-  fill: #0284c7;
+  fill: #4d73a6;
 }
 
 .tooltip {

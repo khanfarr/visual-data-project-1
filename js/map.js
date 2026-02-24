@@ -134,26 +134,26 @@ function updateMap(metricKey) {
     scaleMax = scaleMin + 1;
   }
 
-  const mobilityBlueInterpolator = d3.interpolateRgbBasis([
-    "#f8fbff",
-    "#e0f2fe",
-    "#bae6fd",
-    "#7dd3fc",
-    "#38bdf8",
-    "#0ea5e9",
-    "#0284c7",
-    "#1d4ed8",
-    "#1e3a8a",
-    "#172554",
+  const softBlueInterpolator = d3.interpolateRgbBasis([
+    "#f5f9ff",
+    "#e6f0ff",
+    "#cfe1ff",
+    "#b4cdf5",
+    "#95b5e6",
+    "#779cd1",
+    "#5f86bb",
+    "#4d73a6",
+    "#3f618f",
+    "#354f77",
   ]);
 
   mapColorScale = isMobility
     ? d3
-        .scaleSequentialPow(mobilityBlueInterpolator)
+        .scaleSequentialPow(softBlueInterpolator)
         .domain([scaleMin, scaleMax])
         .exponent(0.45)
         .clamp(true)
-    : d3.scaleSequential(d3.interpolateGreens).domain([scaleMin, scaleMax]);
+    : d3.scaleSequential(softBlueInterpolator).domain([scaleMin, scaleMax]);
 
   mapCountries.attr("fill", (d) => {
     const value = d.row?.[metricKey];
