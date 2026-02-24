@@ -1,4 +1,4 @@
-const DATA_PATH = "data/student-mobility-merged.csv";
+const DATA_PATH = "data/student-mobility-merged-plus-gdp.csv";
 const WORLD_GEOJSON_URL =
   "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson";
 
@@ -17,6 +17,10 @@ function formatNumber(value) {
 
 function formatMaybe(value) {
   return Number.isFinite(value) ? `${formatNumber(value)}%` : "N/A";
+}
+
+function formatMoney(value) {
+  return Number.isFinite(value) ? `$${d3.format(",.0f")(value)}` : "N/A";
 }
 
 function drawHistogram({ containerId, values, xLabel }) {
@@ -181,6 +185,7 @@ function parseRow(row) {
     Year: +row.Year,
     inbound_pct: +row.inbound_pct,
     outbound_pct: +row.outbound_pct,
+    gdp_per_capita: +row.gdp_per_capita,
   };
 }
 
@@ -466,7 +471,9 @@ function drawMap(geojson, dataRows) {
         .html(
           `<strong>${d.row.Entity}</strong><br/>Inbound: ${formatMaybe(
             d.row.inbound_pct
-          )}<br/>Outbound: ${formatMaybe(d.row.outbound_pct)}<br/>Year: ${d.row.Year}`
+          )}<br/>Outbound: ${formatMaybe(
+            d.row.outbound_pct
+          )}<br/>GDP per capita: ${formatMoney(d.row.gdp_per_capita)}<br/>Year: ${d.row.Year}`
         );
     })
     .on("mouseleave", (event) => {
