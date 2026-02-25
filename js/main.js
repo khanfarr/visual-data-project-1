@@ -10,6 +10,7 @@ const WORLD_GEOJSON_URL =
 let mapYears = [];
 let mapGeojson = null;
 let appRows = [];
+const pageElement = document.querySelector(".page");
 
 const state = {
   mapYear: null,
@@ -223,7 +224,27 @@ function renderDashboard() {
   }
 
   updateSelectionSummary(analysisRows.length, filteredRows.length);
+  requestAnimationFrame(fitDashboardToViewport);
 }
+
+function fitDashboardToViewport() {
+  if (!pageElement) return;
+
+  pageElement.style.transform = "none";
+  pageElement.style.transformOrigin = "top center";
+
+  const rect = pageElement.getBoundingClientRect();
+  const maxHeight = Math.max(window.innerHeight - 8, 1);
+  const maxWidth = Math.max(window.innerWidth - 8, 1);
+  const scale = Math.min(1, maxHeight / rect.height, maxWidth / rect.width);
+
+  pageElement.style.transform = `scale(${scale})`;
+  document.body.style.overflow = "hidden";
+}
+
+window.addEventListener("resize", () => {
+  requestAnimationFrame(fitDashboardToViewport);
+});
 
 Promise.all([d3.csv(DATA_PATH, parseRow), d3.json(WORLD_GEOJSON_URL)])
   .then(([rows, worldGeojson]) => {
