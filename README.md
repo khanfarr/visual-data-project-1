@@ -7,7 +7,7 @@ I am personally curious about access to education around the world, and I kept c
 
 Live site: https://visual-data-project-1.khansfareena.workers.dev/
 
-<img src="./media/dashboard-screenshot.png" alt="Global Student Mobility dashboard" width="760" />
+<img src="./media/dashboard-screenshot.png" alt="Global Student Mobility dashboard" width="400" />
 
 ## Project Overview
 For this project, I wanted to look at international education access through a global lens. The core question I explored is: **which countries mostly send students abroad, which countries mostly receive students, and how do those patterns relate to each other?**
@@ -92,9 +92,11 @@ I organized the dashboard into four linked views:
 ## Findings
 Some patterns I observed while exploring the data:
 
-1. Most countries cluster at relatively low mobility percentages, with a smaller number of high-value outliers.
-2. Inbound and outbound mobility show a moderate positive relationship (countries high in one are often somewhat high in the other, but not always).
-3. Linked views make outliers much easier to interpret, since I can see distribution, country point, and map location at the same time.
+1. Mobility appears highly unequal: in most years, the distributions are right-skewed, meaning a small set of countries accounts for much of the high inbound or outbound activity while many countries stay near the low end.
+2. Countries do not split neatly into "senders" or "receivers." The scatter shows many mixed profiles, including countries with moderate outbound but low inbound, which suggests participation in global education is often one-directional rather than balanced.
+3. High GDP per capita often overlaps with stronger inbound mobility, but not perfectly. Some wealthy countries remain less prominent destinations, and some non-top-GDP countries still attract meaningful inbound shares, suggesting policy, language, and regional networks likely matter alongside income.
+4. The map and histograms together make concentration visible: regional clusters appear in destination-heavy areas, while larger parts of the map remain consistently light across years, pointing to persistent access gaps rather than short-term fluctuation.
+5. Year changes suggest uneven momentum. Some countries move quickly in the distributions while others remain structurally stable, which raises a key question: who is actually gaining new access to international education over time, and who is being left behind?
 
 These are exploratory findings from the visual patterns I observed, not causal claims.
 
@@ -132,27 +134,24 @@ These are continuous quantitative variables, so I used sequential scales to repr
 
 ## Challenges and Future Work
 ### Challenges
-- Fitting all visualizations and controls into one single-page view was harder than I expected. I wanted everything visible without scrolling, but still readable and balanced, so I had to iterate on spacing and sizing a lot.
-- Matching country rows to map features took extra care (ISO-3 first, normalized name fallback).
-- Keeping linked brushing stable across multiple charts required careful shared state and redraw logic.
-- Finding the right color scale took trial and error, especially when trying to keep the map readable and accessible across different metrics.
-- Tuning the map legend gradient bar was also unexpectedly tricky. Small adjustments to the gradient stops, labels, and range mapping made a big difference in how accurate and clear the color encoding felt.
-- Missing GDP values needed clean handling so tooltips and map coloring did not break.
+- Getting all charts and controls to fit on one page took much more iteration than I expected. I kept changing spacing, panel sizes, and text until it finally felt usable instead of cramped.
+- I found country matching messier than it looked at first. Even with ISO-3 codes, I still had to add normalized-name fallbacks for cases that did not line up cleanly.
+- I ran into a few frustrating linked-brushing bugs where one view would update but another would lag or reset unexpectedly. I had to revisit shared state and redraw order several times.
+- Choosing a color scale took me a lot of trial and error. Some options looked nice but made differences hard to read, so I prioritized clarity and accessibility over aesthetics.
+- I was surprised by how sensitive the legend was: tiny changes to gradient stops, domain limits, and labels could make the map feel either accurate or misleading.
+- Missing GDP values created edge cases in both rendering and tooltips, so I added explicit null handling to keep interactions from breaking.
 
 ### Future work
 - Add map brushing/lasso so users can filter geographically.
 - Add richer time analysis (animation or selected-country trend lines).
 - Add regional filters and lightweight annotation/storytelling mode.
+- Build a true origin-destination connection map interaction. I originally wanted users to hover one country and highlight exactly where students come from or go to, but my current OWID inputs only provide one aggregated inbound % and outbound % per country-year. To make that interaction real, I would source bilateral flow data (origin, destination, year, count), reshape it into country-pair links, and then connect a hover action to highlighted route lines and partner-country tooltips.
 
 ## AI and Collaboration
-I used AI tools as support for debugging, code cleanup, and documentation drafting.  
+I used AI tools for debugging, code cleanup, and documentation drafting. I also used autocomplete often for repetitive code, and discussed my data and different design/analysis options with it while deciding next steps.  
+
 I still reviewed and integrated everything manually, and all final implementation decisions were mine.
 
 
 ## Demo Video
-In my 2-3 minute demo video, I walk through:
-- the project motivation and theme
-- all main dashboard views
-- metric switching and the year slider
-- brushing/linked filtering behavior
-- a few findings from exploration
+[Watch the demo video](./media/demo.mp4)
