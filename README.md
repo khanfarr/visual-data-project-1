@@ -77,9 +77,14 @@ I organized the dashboard into four linked views:
 - Histograms: value range in the bin + number of countries
 - Scatterplot: country name + x/y values
 
+<img src="./media/tooltip.png" alt="Tooltip interaction example" width="500" />
+
 ### 2) Changing metric + year
 - I use the map dropdown to switch the displayed metric
 - The year slider updates all views together
+
+<img src="./media/dropdown.png" alt="Metric dropdown interaction" width="500" />
+<img src="./media/year-slider.png" alt="Year slider interaction" width="500" />
 
 ### 3) Brushing + linking
 - Brush mode can be toggled on/off
@@ -88,6 +93,8 @@ I organized the dashboard into four linked views:
 - Multiple brushes are combined with **intersection**
 - All views update to the active brushed set
 - `Clear brushed selection` resets everything
+
+<img src="./media/brushing.png" alt="Brushing and linked highlighting interaction" width="500" />
 
 ## Findings
 Some patterns I observed while exploring the data:
