@@ -32,7 +32,8 @@ body {
 }
 
 .meta {
-  margin: 2px 0;
+  margin: 0;
+  font-size: 0.88rem;
   color: var(--muted);
 }
 
@@ -43,6 +44,18 @@ body {
 
 .meta a:hover {
   text-decoration: underline;
+}
+
+.meta-sep {
+  margin: 0 6px;
+  color: #94a3b8;
+}
+
+.tagline {
+  margin: 2px 0 8px;
+  font-size: 1.03rem;
+  font-weight: 600;
+  color: #1f2937;
 }
 
 .selection-controls {
@@ -71,7 +84,7 @@ body {
 }
 
 .description {
-  margin: 10px 0 0;
+  margin: 0 0 8px;
   font-size: 1.03rem;
 }
 
