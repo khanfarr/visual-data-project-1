@@ -1,78 +1,158 @@
 # Global Student Mobility Dashboard
 
-Interactive D3 dashboard for exploring how countries send and receive international students over time.
+I built this interactive D3 dashboard to explore how countries send and receive international students over time.
+
+I am personally curious about access to education around the world, and I kept coming back to this question: **is studying abroad a global opportunity, or mostly a luxury for a smaller slice of the world, and do high-mobility countries tend to be richer?**
+
 
 Live site: https://visual-data-project-1.khansfareena.workers.dev/
 
 <img src="./media/dashboard-screenshot.png" alt="Global Student Mobility dashboard" width="760" />
 
-## Project Focus
-- Compare countries that attract students (`inbound_pct`) vs countries whose students study abroad (`outbound_pct`).
-- Explore global distributions, spatial patterns, and correlation between the two metrics.
-- Add GDP per capita as an additional context metric on the map.
+## Project Overview
+For this project, I wanted to look at international education access through a global lens. The core question I explored is: **which countries mostly send students abroad, which countries mostly receive students, and how do those patterns relate to each other?**
 
-## Features
-- Choropleth world map with metric toggle:
-  - Inbound student mobility (%)
-  - Outbound student mobility (%)
-  - GDP per capita (US$)
-- Year slider (1998-2022) to update the dashboard by year.
-- Two linked histograms (inbound and outbound) with brush selection.
-- Linked scatterplot (outbound vs inbound) with rectangular brush selection.
-- Cross-filtered interactions across all views with a `Clear brushed selection` reset button.
-- Tooltip details on demand for map, histogram bins, and scatter points.
+I focused on two main metrics:
+- `inbound_pct`: share of students from abroad (inbound mobility)
+- `outbound_pct`: share of students studying abroad (outbound mobility)
 
-## Data Sources
-- OWID: [Share of students from abroad](https://ourworldindata.org/grapher/share-of-students-from-abroad?mapSelect=USA~ETH~LBY)
-- OWID: [Share of students studying abroad](https://ourworldindata.org/grapher/share-of-students-studying-abroad?mapSelect=ARE~NER~DZA)
-- OWID/World Bank: `gdp-per-capita-worldbank.csv`
-- Map geometry: `world.geojson` from D3 Graph Gallery
+I also added a third metric for context:
+- `gdp_per_capita`: GDP per capita (US$)
 
-## Data Processing
-Input files:
-- `data/share-of-students-from-abroad.csv` -> inbound metric
-- `data/share-of-students-studying-abroad.csv` -> outbound metric
-- `data/gdp-per-capita-worldbank.csv` -> GDP context metric
+My goal with this dashboard is to let someone compare these patterns in one place through distributions, a map view, and a correlation view.
 
-Scripts:
-- `scripts/merge_student_mobility_data.py`: merges inbound + outbound by `Code` + `Year`
-- `scripts/build_student_mobility_plus_gdp.py`: merges GDP into mobility dataset
+## About the Data
+Data source: **Our World in Data**
 
-Final app dataset:
+- Inbound mobility:
+  [Share of students from abroad](https://ourworldindata.org/grapher/share-of-students-from-abroad?mapSelect=USA~ETH~LBY)
+- Outbound mobility:
+  [Share of students studying abroad](https://ourworldindata.org/grapher/share-of-students-studying-abroad?mapSelect=ARE~NER~DZA)
+- GDP context file:
+  `data/gdp-per-capita-worldbank.csv` (World Bank series via OWID grapher export)
+
+Map geometry:
+- `world.geojson` from D3 Graph Gallery:
+  https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson
+
+### Data preprocessing
+I downloaded the CSV files and merged them by country code + year (`Code`, `Year`) using Python scripts.
+
+- `scripts/merge_student_mobility_data.py`
+  - merges inbound and outbound data
+- `scripts/build_student_mobility_plus_gdp.py`
+  - appends GDP per capita values
+
+Final dataset used by the app:
 - `data/student-mobility-merged-plus-gdp.csv`
 
-## Run Locally
+Current data coverage in this build:
+- 2,148 country-year rows
+- Years: 1998-2022
+- 101 countries in the 2022 view
+
+## Visualization Components
+I organized the dashboard into four linked views:
+
+1. **Choropleth world map**
+   - Metric toggle: inbound %, outbound %, GDP per capita
+   - Year slider (1998-2022)
+   - Legend + hover tooltip
+
+2. **Inbound histogram**
+   - Distribution of inbound mobility values
+   - Hover tooltip with bin range and count
+
+3. **Outbound histogram**
+   - Distribution of outbound mobility values
+   - Hover tooltip with bin range and count
+
+4. **Scatterplot (Outbound vs Inbound)**
+   - Country-level correlation view
+   - Hover tooltip with country + both metrics
+
+## Interaction Design
+### 1) Hover (detail on demand)
+- Map: country name, inbound/outbound/GDP, year
+- Histograms: value range in the bin + number of countries
+- Scatterplot: country name + x/y values
+
+### 2) Changing metric + year
+- I use the map dropdown to switch the displayed metric
+- The year slider updates all views together
+
+### 3) Brushing + linking
+- Brush mode can be toggled on/off
+- Histograms support horizontal range brushing
+- Scatterplot supports rectangular brushing
+- Multiple brushes are combined with **intersection**
+- All views update to the active brushed set
+- `Clear brushed selection` resets everything
+
+## Findings
+Some patterns I observed while exploring the data:
+
+1. Most countries cluster at relatively low mobility percentages, with a smaller number of high-value outliers.
+2. Inbound and outbound mobility show a moderate positive relationship (countries high in one are often somewhat high in the other, but not always).
+3. Linked views make outliers much easier to interpret, since I can see distribution, country point, and map location at the same time.
+
+These are exploratory findings from the visual patterns I observed, not causal claims.
+
+## Design Choices
+I intentionally kept this as a one-page dashboard layout so related views stay visible together and comparisons feel more natural.
+
+Color decisions:
+- neutral page/card colors for readability
+- sequential blue palette for quantitative encoding
+- light gray tones for missing or filtered-out map values
+
+These are continuous quantitative variables, so I used sequential scales to represent low-to-high magnitude in a way that is intuitive and consistent across views. I kept non-data UI colors muted so color contrast is mainly used for the data itself, which improves scanability and reduces visual noise. I originally tried a green color scale for GDP, but changed it because that choice could be harder to interpret for some color-blind users and made cross-metric comparison less accessible.
+
+## Creation Process
+### Libraries / tools I used
+- HTML, CSS, JavaScript (ES modules)
+- D3.js v7 (via jsDelivr CDN)
+- Python 3 for preprocessing scripts
+- Cloudflare Workers for deployment
+
+### Code structure
+- `index.html`: layout, text, controls, chart containers
+- `style.css`: page layout and styling
+- `js/main.js`: state management, data loading, linked updates
+- `js/map.js`: choropleth map rendering + legend + metric switching
+- `js/histogram.js`: histogram rendering + brush logic
+- `js/scatter.js`: scatterplot rendering + brush logic
+- `js/chart-utils.js`: shared chart and tooltip helpers
+
+## How to Run Locally
 1. Start a local server from the repo root:
    - `python3 -m http.server 8000`
 2. Open:
    - `http://localhost:8000`
 
-## Repository Structure
-- `index.html`: dashboard layout and controls
-- `style.css`: styling and layout
-- `js/main.js`: app state, data loading, linked updates
-- `js/map.js`: choropleth rendering, legend, metric switching
-- `js/histogram.js`: histogram rendering and brush interaction
-- `js/scatter.js`: scatterplot rendering and brush interaction
-- `js/chart-utils.js`: reusable chart helpers and tooltip utilities
-- `scripts/`: preprocessing scripts
-- `data/`: raw and merged CSV files
+## Challenges and Future Work
+### Challenges
+- Fitting all visualizations and controls into one single-page view was harder than I expected. I wanted everything visible without scrolling, but still readable and balanced, so I had to iterate on spacing and sizing a lot.
+- Matching country rows to map features took extra care (ISO-3 first, normalized name fallback).
+- Keeping linked brushing stable across multiple charts required careful shared state and redraw logic.
+- Finding the right color scale took trial and error, especially when trying to keep the map readable and accessible across different metrics.
+- Tuning the map legend gradient bar was also unexpectedly tricky. Small adjustments to the gradient stops, labels, and range mapping made a big difference in how accurate and clear the color encoding felt.
+- Missing GDP values needed clean handling so tooltips and map coloring did not break.
 
-## Tech Stack + Versions
-- Frontend: HTML, CSS, JavaScript (ES modules)
-- Visualization library: D3.js v7 (loaded from jsDelivr CDN in `index.html`)
-- Data preprocessing: Python 3 (scripts in `scripts/`)
-- Deployment platform: Cloudflare Workers
+### Future work
+- Add map brushing/lasso so users can filter geographically.
+- Add richer time analysis (animation or selected-country trend lines).
+- Add regional filters and lightweight annotation/storytelling mode.
 
-## Interaction Guide
-- Use the map metric dropdown to switch between inbound mobility, outbound mobility, and GDP per capita.
-- Use the year slider to change the active year; this updates map and chart views together.
-- Brush horizontally on either histogram to filter countries by a value range.
-- Brush a rectangle on the scatterplot to filter countries by both outbound (x) and inbound (y) ranges.
-- If multiple brushes are active, filters are combined using intersection (only countries meeting all active brush conditions remain).
-- Click `Clear brushed selection` to remove all active brushes and show the full set again.
+## AI and Collaboration
+I used AI tools as support for debugging, code cleanup, and documentation drafting.  
+I still reviewed and integrated everything manually, and all final implementation decisions were mine.
 
-## Known Limitations
-- GDP per capita is missing for some country-year records, so those rows can display `N/A` in tooltips or appear with no GDP value.
-- Country matching on the map relies on ISO-3 codes first and normalized country names as fallback; some edge-case naming differences can still fail to match.
-- Current linked filtering is designed around the selected year view, so cross-year comparisons are not shown simultaneously.
+
+## Demo Video
+In my 2-3 minute demo video, I walk through:
+- the project motivation and theme
+- all main dashboard views
+- metric switching and the year slider
+- brushing/linked filtering behavior
+- a few findings from exploration
