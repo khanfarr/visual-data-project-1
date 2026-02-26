@@ -19,7 +19,6 @@ I focused on two main metrics:
 I also added a third metric for context:
 - `gdp_per_capita`: GDP per capita (US$)
 
-My goal with this dashboard is to let someone compare these patterns in one place through distributions, a map view, and a correlation view.
 
 ## About the Data
 Data source: **Our World in Data**
@@ -72,7 +71,7 @@ I organized the dashboard into four linked views:
    - Hover tooltip with country + both metrics
 
 ## Interaction Design
-### 1) Hover (detail on demand)
+### 1) Hover tooltip
 - Map: country name, inbound/outbound/GDP, year
 - Histograms: value range in the bin + number of countries
 - Scatterplot: country name + x/y values
@@ -99,7 +98,7 @@ I organized the dashboard into four linked views:
 ## Findings
 Some patterns I observed while exploring the data:
 
-1. Mobility appears highly unequal: in most years, the distributions are right-skewed, meaning a small set of countries accounts for much of the high inbound or outbound activity while many countries stay near the low end.
+1. Mobility appears highly unequal: in most years, the distributions are right skewed, meaning a small set of countries accounts for much of the high inbound or outbound activity while many countries stay near the low end.
 2. Countries do not split neatly into "senders" or "receivers." The scatter shows many mixed profiles, including countries with moderate outbound but low inbound, which suggests participation in global education is often one-directional rather than balanced.
 3. High GDP per capita often overlaps with stronger inbound mobility, but not perfectly. Some wealthy countries remain less prominent destinations, and some non-top-GDP countries still attract meaningful inbound shares, suggesting policy, language, and regional networks likely matter alongside income.
 4. The map and histograms together make concentration visible: regional clusters appear in destination-heavy areas, while larger parts of the map remain consistently light across years, pointing to persistent access gaps rather than short-term fluctuation.
@@ -108,7 +107,7 @@ Some patterns I observed while exploring the data:
 These are exploratory findings from the visual patterns I observed, not causal claims.
 
 ## Design Choices
-I intentionally kept this as a one-page dashboard layout so related views stay visible together and comparisons feel more natural.
+I intentionally kept this as a one-page dashboard layout (even though it was difficult at first) so related views stay visible together and comparisons feel more natural.
 
 Color decisions:
 - neutral page/card colors for readability
@@ -118,6 +117,10 @@ Color decisions:
 These are continuous quantitative variables, so I used sequential scales to represent low-to-high magnitude in a way that is intuitive and consistent across views. I kept non-data UI colors muted so color contrast is mainly used for the data itself, which improves scanability and reduces visual noise. I originally tried a green color scale for GDP, but changed it because that choice could be harder to interpret for some color-blind users and made cross-metric comparison less accessible.
 
 ## Creation Process
+Here's my initial sketch, which I used as a guide pretty closely.
+
+<img src="./media/sketch.png" alt="Early dashboard sketch" width="200" />
+
 ### Libraries / tools I used
 - HTML, CSS, JavaScript (ES modules)
 - D3.js v7 (via jsDelivr CDN)
