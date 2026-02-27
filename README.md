@@ -126,7 +126,7 @@ These are continuous quantitative variables, so I used sequential scales to repr
 ## Creation Process
 Here's my initial sketch, which I used as a guide pretty closely.
 
-<img src="./media/sketch.png" alt="Early dashboard sketch" width="200" />
+<img src="./media/sketch.png" alt="Early dashboard sketch" width="275" />
 
 ### Libraries / tools I used
 - HTML, CSS, JavaScript (ES modules)
