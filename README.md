@@ -7,10 +7,10 @@ I am personally curious about access to education around the world, and I kept c
 
 Live site: https://visual-data-project-1.khansfareena.workers.dev/
 
-<img src="./media/dashboard-screenshot.png" alt="Global Student Mobility dashboard" width="400" />
+<img src="./media/dashboard-screenshot.png" alt="Global Student Mobility dashboard" width="350" />
 
 ## Project Overview
-For this project, I wanted to look at international education access through a global lens. The core question I explored is: **which countries mostly send students abroad, which countries mostly receive students, and how do those patterns relate to each other?**
+I wanted to look at international education access through a global lens. The core question I explored is: **which countries mostly send students abroad, which countries mostly receive students, and how do those patterns relate to each other?**
 
 I focused on two main metrics:
 - `inbound_pct`: share of students from abroad (inbound mobility)
@@ -104,17 +104,24 @@ Some patterns I observed while exploring the data:
 4. The map and histograms together make concentration visible: regional clusters appear in destination-heavy areas, while larger parts of the map remain consistently light across years, pointing to persistent access gaps rather than short-term fluctuation.
 5. Year changes suggest uneven momentum. Some countries move quickly in the distributions while others remain structurally stable, which raises a key question: who is actually gaining new access to international education over time, and who is being left behind?
 
-These are exploratory findings from the visual patterns I observed, not causal claims.
+
+**What I Want Users to Wonder:**
+
+- If a country sends a lot of students abroad, is that a sign of success (global connections) or a warning sign (low retention capacity)?
+- Which countries are “exporting ambition” (high outbound) without building local opportunity (low inbound), and what does that say about inequality in education systems?
+- Are top destination countries “winning” because of education quality, language, immigration policy, or job access — and can you see the result of that in inbound mobility?
+- If many outbound students later stay abroad, is international education unintentionally a “migration pathway”, and should that be seen as a loss or a gain?
+- Is international education acting like a global “sorting system,” where talent concentrates in a small number of destination countries?
 
 ## Design Choices
-I intentionally kept this as a one-page dashboard layout (even though it was difficult at first) so related views stay visible together and comparisons feel more natural.
+I kept this as a one-page dashboard layout (even though it was difficult at first) so related views stay visible together and comparisons feel more natural.
 
 Color decisions:
 - neutral page/card colors for readability
 - sequential blue palette for quantitative encoding
 - light gray tones for missing or filtered-out map values
 
-These are continuous quantitative variables, so I used sequential scales to represent low-to-high magnitude in a way that is intuitive and consistent across views. I kept non-data UI colors muted so color contrast is mainly used for the data itself, which improves scanability and reduces visual noise. I originally tried a green color scale for GDP, but changed it because that choice could be harder to interpret for some color-blind users and made cross-metric comparison less accessible.
+These are continuous quantitative variables, so I used sequential scales to represent low to high magnitude in a way that is intuitive and consistent across views. I kept non data UI colors muted so color contrast is mainly used for the data itself, which improves scanability and reduces visual noise. I originally tried a green color scale for GDP, but changed it because that choice could be harder to interpret for some color blind users and would make cross-metric comparison less accessible.
 
 ## Creation Process
 Here's my initial sketch, which I used as a guide pretty closely.
@@ -145,19 +152,19 @@ Here's my initial sketch, which I used as a guide pretty closely.
 ## Challenges and Future Work
 ### Challenges
 - Fitting all visualizations and controls into one single-page view was harder than I expected. I wanted everything visible without scrolling, but still readable and balanced, so I had to iterate on spacing and sizing a lot.
-- Matching country rows to map features took extra care (ISO-3 first, normalized name fallback).
-- Keeping linked brushing stable across multiple charts required careful shared state and redraw logic.
+- Matching country rows to map features took some extra work.
+- Keeping linked brushing stable across multiple charts required careful shared state and redraw logic which took a lot of iterations.
 - Finding the right color scale took trial and error, especially when trying to keep the map readable and accessible across different metrics.
-- Tuning the map legend gradient bar was also unexpectedly tricky. Small adjustments to the gradient stops, labels, and range mapping made a big difference in how accurate and clear the color encoding felt.
-- Missing GDP values needed clean handling so tooltips and map coloring did not break.
+- Tuning the map legend gradient bar was also unexpectedly tricky. Small adjustments to the gradient stops, labels, and range mapping made a big difference in how accurate and clear the color encoding felt, and I still think it could be improved on.
+- Missing GDP values needed clean handling so that the tooltips and map coloring did not break.
 
 ### Future work
 - Add richer time analysis (animation or selected-country trend lines).
 - Add regional filters and lightweight annotation/storytelling mode.
-- Build a true origin-destination connection spider map type of interaction. I originally wanted users to hover one country and highlight exactly where students come from or go to, but my current OWID inputs only provide one aggregated inbound % and outbound % per country-year. To make that interaction real, I would source bilateral flow data (origin, destination, year, count), reshape it into country-pair links, and then connect a hover action to highlighted route lines and partner-country tooltips.
+- Build a true origin-destination connection spider map type of interaction. I originally wanted users to hover one country and highlight exactly where students come from or go to, but my current OWID inputs only provide one aggregated inbound % and outbound % per country-year. To make that interaction real, I would source bilateral flow data (origin, destination, year, count), reshape it into country-pair links, and then connect a hover action to highlighted route lines and partner-country tooltips, however, that data wasn't available on OWID which caused me to pivot.
 
 ## AI and Collaboration
-I used AI tools for debugging, code cleanup, and documentation drafting. I also used autocomplete often for repetitive code, and discussed my data and different design/analysis options with it while deciding next steps. I still reviewed and integrated those parts manually, and all final implementation decisions were mine.
+I used AI tools for debugging, code cleanup, and documentation drafting. I also used autocomplete often for repetitive code, boilerplate code, and discussed my data and different design/analysis options with it while deciding next steps. I still reviewed and integrated those parts manually, and all final implementation decisions were mine.
 
 
 ## Demo Video
