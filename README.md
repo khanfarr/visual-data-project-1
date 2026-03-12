@@ -169,3 +169,5 @@ I used AI tools for debugging, code cleanup, and documentation drafting. I also 
 
 ## Demo Video
 [Watch the demo video](./media/demo.mp4)
+
+Please try this [link](https://youtu.be/DvmKwaT6WI8) in case the one above doesn't work.
